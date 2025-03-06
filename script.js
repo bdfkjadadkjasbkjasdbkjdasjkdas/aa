@@ -1,4 +1,3 @@
-
 // Initialize Telegram WebApp
 const tg = window.Telegram.WebApp;
 tg.expand();
@@ -8,22 +7,22 @@ function getUrlParams() {
     const params = {};
     const queryString = window.location.search;
     const urlParams = new URLSearchParams(queryString);
-    
+
     for (const [key, value] of urlParams) {
         params[key] = decodeURIComponent(value);
     }
-    
+
     return params;
 }
 
 // Function to generate a random ticket number if not provided
 function generateRandomTicketNumber() {
-    const ticketNumber = Math.floor(Math.random() * (999999999 - 950000000) + 950000000);
-    const millions = Math.floor(ticketNumber / 1000000);
-    const thousands = Math.floor((ticketNumber / 1000) % 1000);
-    const remainder = ticketNumber % 1000;
-    
-    return `${millions} ${thousands} ${remainder}`;
+    const range = Math.random() < 0.5 ? (Math.random() < 0.5 ? 100 : 1000) : (Math.random() < 0.5 ? 100 : 900); //Choose a range randomly
+    const min = Math.random() < 0.5 ? 100 : 900;
+    const max = Math.random() < 0.5 ? 900 : 999;
+
+    const ticketNumber = Math.floor(Math.random() * (max - min + 1)) + min;
+    return ticketNumber;
 }
 
 // Function to generate expiration time if not provided
@@ -42,7 +41,7 @@ let countdownInterval;
 // Add touch event handlers
 document.addEventListener('DOMContentLoaded', function() {
     const ticketContainer = document.getElementById('ticketContainer');
-    
+
     ticketContainer.addEventListener('touchstart', (e) => {
         startX = e.touches[0].clientX;
     });
@@ -71,7 +70,7 @@ function showTicketView() {
     const ticketContainer = document.getElementById('ticketContainer');
     const qrTicketNumber = document.getElementById('qrTicketNumber');
     const controlTab = document.getElementById('controlTab');
-    
+
     ticketContainer.style.transform = 'translateX(0)';
     qrTicketNumber.style.color = '#e31c1c';
     qrTicketNumber.style.borderBottom = 'none';
@@ -120,7 +119,7 @@ function showQRView() {
     const ticketContainer = document.getElementById('ticketContainer');
     const qrTicketNumber = document.getElementById('qrTicketNumber');
     const controlTab = document.getElementById('controlTab');
-    
+
     ticketContainer.style.transform = 'translateX(-50%)';
     qrTicketNumber.style.color = 'white';
     qrTicketNumber.style.borderBottom = 'none';
@@ -196,7 +195,7 @@ function closeTicket() {
     if (countdownInterval) {
         clearInterval(countdownInterval);
     }
-    
+
     try {
         tg.close();
     } catch (e) {
@@ -207,26 +206,31 @@ function closeTicket() {
 // Main function to initialize the app
 function initApp() {
     console.log("Начинаем инициализацию приложения...");
-    
+
     // Check if we have URL parameters with ticket data
     const urlParams = getUrlParams();
-    
-    // Generate random ticket number
-    const ticketNumber = generateRandomTicketNumber();
-    
+
+    // Get or generate ticket number
+    let ticketNumber;
+    if (urlParams.ticket_number) {
+        ticketNumber = urlParams.ticket_number;
+    } else {
+        ticketNumber = generateRandomTicketNumber();
+    }
+
     // Get current date and time
     const now = new Date();
-    const currentDate = now.toLocaleDateString('ru-RU', {
-        day: '2-digit',
-        month: 'long',
-        year: 'numeric'
-    }).toLowerCase();
-    
+    const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+    const day = now.getDate();
+    const month = months[now.getMonth()];
+    const year = now.getFullYear();
+    const currentDate = `${day} ${month} ${year}`;
+
     const currentTime = now.toLocaleTimeString('ru-RU', {
         hour: '2-digit',
         minute: '2-digit'
     });
-    
+
     // Set ticket data from URL parameters or use defaults
     const ticketData = {
         carrier: urlParams.carrier || 'ИП Патрин Н. Н.',
@@ -234,37 +238,37 @@ function initApp() {
         route_name: urlParams.route_name || 'Парк "Прищепка" - Спортзал',
         bus_number: urlParams.bus_number || 'х312мв124',
         ticket_count: urlParams.ticket_count || 1,
-        ticket_number: urlParams.ticket_number || ticketNumber,
+        ticket_number: ticketNumber,
         price: urlParams.price || 44,
         date: urlParams.date || currentDate,
         time: urlParams.time || currentTime
     };
-    
+
     // Update UI with ticket data
     document.getElementById('carrier').textContent = ticketData.carrier;
     document.getElementById('route-name').textContent = `${ticketData.route_number ? ticketData.route_number + ' ' : ''}${ticketData.route_name}`;
     document.getElementById('bus').textContent = ticketData.bus_number;
-    
+
     const pricePerTicket = ticketData.route_number && ticketData.route_number.endsWith('т') ? 40 : 44;
     const ticketCount = parseInt(ticketData.ticket_count);
     const totalPrice = pricePerTicket * ticketCount;
-    
+
     document.getElementById('price').innerHTML = `${ticketCount} шт., Полный, <span style="margin-left: 5px;">${totalPrice}.00</span> <img src="https://i.imgur.com/DRNquWr.png" style="width: 15px; height: 20px; vertical-align: middle; position: relative; top: -1px;">`;
     document.getElementById('purchase-date').textContent = ticketData.date;
     document.getElementById('purchase-time').textContent = ticketData.time;
-    
+
     // Update ticket numbers
     document.getElementById('mainTicketNumber').textContent = ticketData.ticket_number;
     document.getElementById('qrTicketNum').textContent = ticketData.ticket_number;
     document.getElementById('qrNumberDisplay').textContent = `№ ${ticketData.ticket_number}`;
-    
+
     // Generate QR code
     const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${ticketData.ticket_number}`;
     document.getElementById('qrCode').src = qrCodeUrl;
-    
+
     // Start countdown
     startCountdown();
-    
+
     // Enable closing confirmation if supported
     try {
         tg.enableClosingConfirmation();
