@@ -18,14 +18,14 @@ function getUrlParams() {
 // Function to get ticket number from URL params or use default
 function getTicketNumber(params) {
     if (params.ticket_number) {
-        // Получаем номер из URL
+        // Получаем номер из URL и удаляем лишние пробелы
         let ticketNum = params.ticket_number.trim();
-        
+
         console.log("Получен номер билета из URL:", ticketNum);
 
-        // Проверяем, нужно ли форматировать номер
+        // Проверяем, нужно ли форматировать номер (если нет пробелов)
         if (ticketNum.indexOf(' ') === -1) {
-            // Для номера из 9 цифр (стандартный формат от бота)
+            // Для номера из 9 цифр (стандартный формат от бота 900-999 + 100-999 + 100-999)
             if (ticketNum.length === 9) {
                 // Добавляем пробелы в формате XXX XXX XXX
                 ticketNum = ticketNum.slice(0, 3) + ' ' + ticketNum.slice(3, 6) + ' ' + ticketNum.slice(6);
@@ -40,11 +40,12 @@ function getTicketNumber(params) {
                 ticketNum = ticketNum.slice(0, 1) + ' ' + ticketNum.slice(1, 4) + ' ' + ticketNum.slice(4);
             }
         }
-        
-        console.log("Номер билета для отображения:", ticketNum);
+
+        console.log("Форматированный номер билета для отображения:", ticketNum);
         return ticketNum;
     }
     // Если номер не передан, используем дефолтный
+    console.log("Номер билета не найден в URL, используем дефолтный");
     return "000 000 000";
 }
 
@@ -241,7 +242,7 @@ function initApp() {
     // Добавляем 4 часа от текущего времени для +4 UTC и отнимаем 30 минут
     now.setHours(now.getHours() + 4);
     now.setMinutes(now.getMinutes() - 30);
-    
+
     const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
     const day = now.getDate();
     const month = months[now.getMonth()];
@@ -271,7 +272,7 @@ function initApp() {
     if (urlParams.ticket_number) {
         console.log("Номер билета из URL:", urlParams.ticket_number);
     }
-    
+
     // Всегда преобразуем дату на русский язык, независимо от формата
     const dateRegex = /(\d+)\s+(\w+)\s+(\d+)/;
     const match = ticketData.date.match(dateRegex);
@@ -328,7 +329,7 @@ function initApp() {
     // Сохраняем оригинальный номер билета без изменений
     const originalTicketNumber = ticketData.ticket_number;
     console.log("Получен номер билета из бота:", originalTicketNumber);
-    
+
     // Выводим в консоль для отладки
     if (urlParams.ticket_number) {
         console.log("Используем номер билета из URL параметра:", urlParams.ticket_number);
