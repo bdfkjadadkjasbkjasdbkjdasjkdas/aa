@@ -78,7 +78,7 @@ function showTicketView() {
     qrTicketNumber.style.position = 'relative';
 
     // Update the ticket number with the appropriate icon
-    qrTicketNumber.innerHTML = `<img src="https://i.imgur.com/TLZcW19.png" style="width: 28px; height: 32px; vertical-align: middle; margin-right: 5px;"> <span id="qrTicketNum">${document.getElementById('qrTicketNum').textContent}</span>`;
+    qrTicketNumber.innerHTML = `<img src="https://i.imgur.com/yBrlpYO.png" style="width: 25px; height: 30px; vertical-align: middle; margin-right: 5px;"> <span id="qrTicketNum">${document.getElementById('qrTicketNum').textContent}</span>`;
     qrTicketNumber.style.paddingBottom = '0';
 
     // Remove existing underline if present
@@ -159,7 +159,7 @@ function showQRView() {
         controlTab.appendChild(controlUnderline);
     }, 10);
 
-    qrTicketNumber.innerHTML = `<img src="https://i.imgur.com/oKXMr2A.png" style="width: 28px; height: 32px; vertical-align: middle; margin-right: 5px;"> <span id="qrTicketNum">${document.getElementById('qrTicketNum').textContent}</span>`;
+    qrTicketNumber.innerHTML = `<img src="https://i.imgur.com/TLZcW19.png" style="width: 25px; height: 25px; vertical-align: middle; margin-right: 5px;"> <span id="qrTicketNum">${document.getElementById('qrTicketNum').textContent}</span>`;
 
     isQRView = true;
 }
