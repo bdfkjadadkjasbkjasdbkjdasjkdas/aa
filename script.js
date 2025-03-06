@@ -254,14 +254,14 @@ function initApp() {
         minute: '2-digit'
     });
 
-    // Set ticket data from URL parameters or use defaults
+    // Get ticket data from URL parameters or use defaults
     const ticketData = {
         carrier: urlParams.carrier || 'ИП Патрин Н. Н.',
         route_number: urlParams.route_number || '21',
         route_name: urlParams.route_name || 'Парк "Прищепка" - Спортзал',
         bus_number: urlParams.bus_number || 'х312мв124',
         ticket_count: urlParams.ticket_count || 1,
-        ticket_number: ticketNumber,
+        ticket_number: ticketNumber,  // Используем форматированный номер из URL
         price: urlParams.price || 44,
         date: urlParams.date || currentDate,
         time: urlParams.time || currentTime
