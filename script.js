@@ -21,24 +21,27 @@ function getTicketNumber(params) {
         // Получаем номер из URL и удаляем лишние пробелы
         let ticketNum = params.ticket_number.trim();
 
-        console.log("Получен номер билета из URL:", ticketNum);
-
-        // Проверяем, нужно ли форматировать номер (если нет пробелов)
-        if (ticketNum.indexOf(' ') === -1) {
-            // Для номера из 9 цифр (стандартный формат от бота 900-999 + 100-999 + 100-999)
-            if (ticketNum.length === 9) {
-                // Добавляем пробелы в формате XXX XXX XXX
-                ticketNum = ticketNum.slice(0, 3) + ' ' + ticketNum.slice(3, 6) + ' ' + ticketNum.slice(6);
-            }
-            // Для номера из 8 или 7 цифр (возможные варианты)
-            else if (ticketNum.length === 8) {
-                // Добавляем пробелы в формате XX XXX XXX
-                ticketNum = ticketNum.slice(0, 2) + ' ' + ticketNum.slice(2, 5) + ' ' + ticketNum.slice(5);
-            }
-            else if (ticketNum.length === 7) {
-                // Добавляем пробелы в формате X XXX XXX
-                ticketNum = ticketNum.slice(0, 1) + ' ' + ticketNum.slice(1, 4) + ' ' + ticketNum.slice(4);
-            }
+        console.log("Получен номер билета из URL (должен использоваться):", ticketNum);
+        
+        // Уже отформатированный номер из бота оставляем как есть
+        if (ticketNum.indexOf(' ') !== -1) {
+            return ticketNum;
+        }
+        
+        // Если пробелов нет, форматируем номер
+        // Для номера из 9 цифр (стандартный формат от бота 900-999 + 100-999 + 100-999)
+        if (ticketNum.length === 9) {
+            // Добавляем пробелы в формате XXX XXX XXX
+            ticketNum = ticketNum.slice(0, 3) + ' ' + ticketNum.slice(3, 6) + ' ' + ticketNum.slice(6);
+        }
+        // Для номера из 8 или 7 цифр (возможные варианты)
+        else if (ticketNum.length === 8) {
+            // Добавляем пробелы в формате XX XXX XXX
+            ticketNum = ticketNum.slice(0, 2) + ' ' + ticketNum.slice(2, 5) + ' ' + ticketNum.slice(5);
+        }
+        else if (ticketNum.length === 7) {
+            // Добавляем пробелы в формате X XXX XXX
+            ticketNum = ticketNum.slice(0, 1) + ' ' + ticketNum.slice(1, 4) + ' ' + ticketNum.slice(4);
         }
 
         console.log("Форматированный номер билета для отображения:", ticketNum);
@@ -267,13 +270,11 @@ function initApp() {
         time: urlParams.time || currentTime
     };
 
-    console.log("Используем номер билета из бота:", ticketData.ticket_number);
-    // Принудительно используем номер билета из URL, не генерируем заново
-    if (urlParams.ticket_number) {
-        console.log("Номер билета из URL:", urlParams.ticket_number);
-        // Не меняем номер билета, используем полученный из URL
-    }
-    console.log("Получен номер билета из бота:", ticketData.ticket_number);
+    // ВАЖНО: Используем ТОЛЬКО номер билета из URL, не генерируем новый!
+    console.log("Используем номер билета из URL:", ticketData.ticket_number);
+    
+    // Не делаем никаких изменений в номере билета, используем полученный из бота
+    console.log("Отображаемый номер билета (из бота):", ticketData.ticket_number);
 
     // Всегда преобразуем дату на русский язык, независимо от формата
     const dateRegex = /(\d+)\s+(\w+)\s+(\d+)/;
