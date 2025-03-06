@@ -33,42 +33,174 @@ function generateExpiryTime() {
     return expiryTime.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
 }
 
-// Function to display ticket info
-function displayTicket(ticketData) {
-    try {
-        console.log("Отображаем данные билета:", JSON.stringify(ticketData));
-        
-        document.getElementById('loading').style.display = 'none';
-        document.getElementById('ticket-container').style.display = 'block';
-        
-        // Fill in ticket information
-        document.getElementById('carrier').textContent = ticketData.carrier || 'ИП Патрин Н. Н.';
+// Global variables for ticket state
+let isQRView = false;
+let startX = 0;
+let endX = 0;
+let countdownInterval;
+
+// Add touch event handlers
+document.addEventListener('DOMContentLoaded', function() {
+    const ticketContainer = document.getElementById('ticketContainer');
     
-    const routeText = ticketData.route_number && ticketData.route_name 
-        ? `🚏 ${ticketData.route_number} ${ticketData.route_name}`
-        : '🚏 21 Парк "Прищепка" - Спортзал';
-    document.getElementById('route').textContent = routeText;
+    ticketContainer.addEventListener('touchstart', (e) => {
+        startX = e.touches[0].clientX;
+    });
+
+    ticketContainer.addEventListener('touchmove', (e) => {
+        endX = e.touches[0].clientX;
+    });
+
+    ticketContainer.addEventListener('touchend', () => {
+        const diffX = startX - endX;
+        if (Math.abs(diffX) > 50) {
+            if (diffX > 0 && !isQRView) {
+                showQRView();
+            } else if (diffX < 0 && isQRView) {
+                showTicketView();
+            }
+        }
+    });
+
+    // Initialize the app immediately
+    initApp();
+});
+
+// Function to show the ticket view
+function showTicketView() {
+    const ticketContainer = document.getElementById('ticketContainer');
+    const qrTicketNumber = document.getElementById('qrTicketNumber');
+    const controlTab = document.getElementById('controlTab');
     
-    document.getElementById('bus').textContent = `🚌 ${ticketData.bus_number || 'х312мв124'}`;
-    
-    const pricePerTicket = ticketData.route_number && ticketData.route_number.endsWith('т') ? 40 : 44;
-    const ticketCount = ticketData.ticket_count || 1;
-    const totalPrice = ticketData.price || (pricePerTicket * ticketCount);
-    document.getElementById('price').textContent = `🪙 Тариф: Полный ${pricePerTicket},00 ₽`;
-    
-    document.getElementById('ticket-number').textContent = `🎫 Билет № ${ticketData.ticket_number || generateRandomTicketNumber()}`;
-    document.getElementById('expiry').textContent = `🕑 Действует до ${ticketData.expiry || generateExpiryTime()}`;
-    
-    // Отключаем подтверждение закрытия, т.к. оно не поддерживается в версии 6.0
-    try {
-        tg.enableClosingConfirmation();
-    } catch (e) {
-        console.log("Подтверждение закрытия не поддерживается в данной версии");
+    ticketContainer.style.transform = 'translateX(0)';
+    qrTicketNumber.style.color = '#e31c1c';
+    qrTicketNumber.style.borderBottom = 'none';
+    qrTicketNumber.style.position = 'relative';
+
+    // Update the ticket number with the appropriate icon
+    qrTicketNumber.innerHTML = `<img src="https://i.imgur.com/TLZcW19.png" style="width: 28px; height: 32px; vertical-align: middle; margin-right: 5px;"> <span id="qrTicketNum">${document.getElementById('qrTicketNum').textContent}</span>`;
+    qrTicketNumber.style.paddingBottom = '0';
+
+    // Remove existing underline if present
+    const existingUnderline = qrTicketNumber.querySelector('#ticket-underline');
+    if (existingUnderline) {
+        existingUnderline.remove();
     }
-    } catch (error) {
-        console.error("Ошибка при отображении билета:", error);
-        document.getElementById('loading').textContent = "Ошибка загрузки билета. Попробуйте снова.";
-        document.getElementById('loading').style.display = 'flex';
+
+    // Add red underline
+    setTimeout(() => {
+        const ticketUnderline = document.createElement('div');
+        ticketUnderline.style.position = 'absolute';
+        ticketUnderline.style.bottom = '-10px';
+        ticketUnderline.style.left = '0';
+        ticketUnderline.style.width = '100%';
+        ticketUnderline.style.height = '2px';
+        ticketUnderline.style.backgroundColor = '#e31c1c';
+        ticketUnderline.id = 'ticket-underline';
+
+        qrTicketNumber.appendChild(ticketUnderline);
+    }, 10);
+
+    controlTab.style.color = 'white';
+    controlTab.style.borderBottom = 'none';
+    controlTab.style.position = 'relative';
+
+    // Remove underline from control tab
+    const controlUnderline = controlTab.querySelector('#control-underline');
+    if (controlUnderline) {
+        controlUnderline.remove();
+    }
+
+    controlTab.innerHTML = `<img src="https://i.imgur.com/9nKXwQk.png" style="width: 25px; height: 30px; vertical-align: middle; margin-right: 5px;"> Контроль`;
+    isQRView = false;
+}
+
+// Function to show the QR view
+function showQRView() {
+    const ticketContainer = document.getElementById('ticketContainer');
+    const qrTicketNumber = document.getElementById('qrTicketNumber');
+    const controlTab = document.getElementById('controlTab');
+    
+    ticketContainer.style.transform = 'translateX(-50%)';
+    qrTicketNumber.style.color = 'white';
+    qrTicketNumber.style.borderBottom = 'none';
+
+    // Remove underline from ticket number
+    const ticketUnderline = qrTicketNumber.querySelector('#ticket-underline');
+    if (ticketUnderline) {
+        ticketUnderline.remove();
+    }
+
+    controlTab.style.color = '#e31c1c';
+    controlTab.style.borderBottom = 'none';
+    controlTab.style.position = 'relative';
+    controlTab.style.paddingBottom = '0';
+
+    // Update control button with appropriate icon
+    controlTab.innerHTML = `<img src="https://i.imgur.com/yBrlpYO.png" style="width: 25px; height: 30px; vertical-align: middle; margin-right: 5px;"> Контроль`;
+
+    // Remove existing underline if present
+    const existingUnderline = controlTab.querySelector('#control-underline');
+    if (existingUnderline) {
+        existingUnderline.remove();
+    }
+
+    // Add red underline
+    setTimeout(() => {
+        const controlUnderline = document.createElement('div');
+        controlUnderline.style.position = 'absolute';
+        controlUnderline.style.bottom = '-10px';
+        controlUnderline.style.left = '0';
+        controlUnderline.style.width = '100%';
+        controlUnderline.style.height = '2px';
+        controlUnderline.style.backgroundColor = '#e31c1c';
+        controlUnderline.id = 'control-underline';
+
+        controlTab.appendChild(controlUnderline);
+    }, 10);
+
+    qrTicketNumber.innerHTML = `<img src="https://i.imgur.com/oKXMr2A.png" style="width: 28px; height: 32px; vertical-align: middle; margin-right: 5px;"> <span id="qrTicketNum">${document.getElementById('qrTicketNum').textContent}</span>`;
+
+    isQRView = true;
+}
+
+// Function to start the countdown timer
+function startCountdown() {
+    if (countdownInterval) {
+        clearInterval(countdownInterval);
+    }
+
+    const countdownElements = document.querySelectorAll('.countdown-top');
+    let timeLeft = 15;
+
+    countdownElements.forEach(element => {
+        element.textContent = `Действует: ${timeLeft} сек.`;
+        element.style.fontSize = '24px';
+    });
+
+    countdownInterval = setInterval(() => {
+        timeLeft--;
+        countdownElements.forEach(element => {
+            element.textContent = `Действует: ${timeLeft} сек.`;
+        });
+
+        if (timeLeft <= 0) {
+            clearInterval(countdownInterval);
+            closeTicket();
+        }
+    }, 1000);
+}
+
+// Function to close the ticket
+function closeTicket() {
+    if (countdownInterval) {
+        clearInterval(countdownInterval);
+    }
+    
+    try {
+        tg.close();
+    } catch (e) {
+        console.log("Ошибка при закрытии WebApp:", e);
     }
 }
 
@@ -76,46 +208,67 @@ function displayTicket(ticketData) {
 function initApp() {
     console.log("Начинаем инициализацию приложения...");
     
-    // Отображаем загрузочный индикатор
-    document.getElementById('loading').style.display = 'flex';
-    document.getElementById('ticket-container').style.display = 'none';
-    
     // Check if we have URL parameters with ticket data
     const urlParams = getUrlParams();
     
-    if (urlParams.auto_generate === 'true' || urlParams.carrier) {
-        // We have ticket data in URL, use it
-        const ticketData = {
-            carrier: urlParams.carrier,
-            route_number: urlParams.route_number,
-            route_name: urlParams.route_name,
-            bus_number: urlParams.bus_number,
-            ticket_count: urlParams.ticket_count,
-            ticket_number: urlParams.ticket_number,
-            price: urlParams.price,
-            expiry: urlParams.time,
-            date: urlParams.date
-        };
-        
-        // Display the ticket with data from URL
-        displayTicket(ticketData);
-    } else {
-        // No data in URL, generate default ticket
-        const defaultTicketData = {
-            carrier: 'ИП Патрин Н. Н.',
-            route_number: '21',
-            route_name: 'Парк "Прищепка" - Спортзал',
-            bus_number: 'х312мв124',
-            ticket_count: 1,
-            ticket_number: generateRandomTicketNumber(),
-            price: 44,
-            expiry: generateExpiryTime()
-        };
-        
-        // Display default ticket
-        displayTicket(defaultTicketData);
+    // Generate random ticket number
+    const ticketNumber = generateRandomTicketNumber();
+    
+    // Get current date and time
+    const now = new Date();
+    const currentDate = now.toLocaleDateString('ru-RU', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric'
+    }).toLowerCase();
+    
+    const currentTime = now.toLocaleTimeString('ru-RU', {
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+    
+    // Set ticket data from URL parameters or use defaults
+    const ticketData = {
+        carrier: urlParams.carrier || 'ИП Патрин Н. Н.',
+        route_number: urlParams.route_number || '21',
+        route_name: urlParams.route_name || 'Парк "Прищепка" - Спортзал',
+        bus_number: urlParams.bus_number || 'х312мв124',
+        ticket_count: urlParams.ticket_count || 1,
+        ticket_number: urlParams.ticket_number || ticketNumber,
+        price: urlParams.price || 44,
+        date: urlParams.date || currentDate,
+        time: urlParams.time || currentTime
+    };
+    
+    // Update UI with ticket data
+    document.getElementById('carrier').textContent = ticketData.carrier;
+    document.getElementById('route-name').textContent = `${ticketData.route_number ? ticketData.route_number + ' ' : ''}${ticketData.route_name}`;
+    document.getElementById('bus').textContent = ticketData.bus_number;
+    
+    const pricePerTicket = ticketData.route_number && ticketData.route_number.endsWith('т') ? 40 : 44;
+    const ticketCount = parseInt(ticketData.ticket_count);
+    const totalPrice = pricePerTicket * ticketCount;
+    
+    document.getElementById('price').innerHTML = `${ticketCount} шт., Полный, <span style="margin-left: 5px;">${totalPrice}.00</span> <img src="https://i.imgur.com/DRNquWr.png" style="width: 15px; height: 20px; vertical-align: middle; position: relative; top: -1px;">`;
+    document.getElementById('purchase-date').textContent = ticketData.date;
+    document.getElementById('purchase-time').textContent = ticketData.time;
+    
+    // Update ticket numbers
+    document.getElementById('mainTicketNumber').textContent = ticketData.ticket_number;
+    document.getElementById('qrTicketNum').textContent = ticketData.ticket_number;
+    document.getElementById('qrNumberDisplay').textContent = `№ ${ticketData.ticket_number}`;
+    
+    // Generate QR code
+    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${ticketData.ticket_number}`;
+    document.getElementById('qrCode').src = qrCodeUrl;
+    
+    // Start countdown
+    startCountdown();
+    
+    // Enable closing confirmation if supported
+    try {
+        tg.enableClosingConfirmation();
+    } catch (e) {
+        console.log("Подтверждение закрытия не поддерживается в данной версии");
     }
 }
-
-// Initialize when the DOM is fully loaded
-document.addEventListener('DOMContentLoaded', initApp);
