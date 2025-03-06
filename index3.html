@@ -1,0 +1,120 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <title>Автобусный билет</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #000000;
+            color: var(--tg-theme-text-color, #ffffff);
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            height: -webkit-fill-available;
+            height: 100dvh;
+            width: 100%;
+            overflow: hidden;
+            position: fixed;
+            left: 0;
+            top: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: -webkit-fill-available;
+        }
+
+        .container {
+            width: 100%;
+            height: 100dvh;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        html {
+            height: -webkit-fill-available;
+        }
+        
+        html, body {
+            height: 100dvh;
+            max-height: -webkit-fill-available;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            left: 0;
+        }
+        
+        .ticket {
+            background-color: #191919;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        
+        .ticket-header {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #fff;
+        }
+        
+        .ticket-info {
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+        
+        .ticket-number {
+            font-weight: bold;
+            font-size: 18px;
+            margin: 15px 0;
+        }
+        
+        .ticket-expiry {
+            margin-top: 15px;
+            color: #ffcc00;
+            font-weight: bold;
+        }
+        
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            font-size: 18px;
+        }
+        
+        .qr-placeholder {
+            width: 150px;
+            height: 150px;
+            background-color: #333;
+            margin: 15px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="loading" class="loading">Загрузка билета...</div>
+        <div id="ticket-container" style="display: none;">
+            <div class="ticket">
+                <div class="ticket-header" id="carrier"></div>
+                <div class="ticket-info" id="route"></div>
+                <div class="ticket-info" id="bus"></div>
+                <div class="ticket-info" id="price"></div>
+                <div class="ticket-number" id="ticket-number"></div>
+                <div class="qr-placeholder">QR-код билета</div>
+                <div class="ticket-expiry" id="expiry"></div>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
