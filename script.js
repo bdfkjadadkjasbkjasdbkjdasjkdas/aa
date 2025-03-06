@@ -18,14 +18,14 @@ function getUrlParams() {
 // Function to get ticket number from URL params or use default
 function getTicketNumber(params) {
     if (params.ticket_number) {
-        // Убедимся, что формат номера правильный
+        // Получаем номер из URL
         let ticketNum = params.ticket_number.trim();
         
         console.log("Получен номер билета из URL:", ticketNum);
 
-        // Проверка, имеет ли номер пробелы и правильной ли он длины
+        // Проверяем, нужно ли форматировать номер
         if (ticketNum.indexOf(' ') === -1) {
-            // Для номера из 9 цифр (от бота)
+            // Для номера из 9 цифр (стандартный формат от бота)
             if (ticketNum.length === 9) {
                 // Добавляем пробелы в формате XXX XXX XXX
                 ticketNum = ticketNum.slice(0, 3) + ' ' + ticketNum.slice(3, 6) + ' ' + ticketNum.slice(6);
@@ -41,7 +41,7 @@ function getTicketNumber(params) {
             }
         }
         
-        console.log("Форматированный номер билета:", ticketNum);
+        console.log("Номер билета для отображения:", ticketNum);
         return ticketNum;
     }
     // Если номер не передан, используем дефолтный
@@ -325,19 +325,19 @@ function initApp() {
     document.getElementById('purchase-date').textContent = ticketData.date;
     document.getElementById('purchase-time').textContent = ticketData.time;
 
-    // Убедимся, что используем номер билета, переданный из бота без изменений
-    const formattedTicketNumber = ticketData.ticket_number;
-    console.log("Получен номер билета из бота:", formattedTicketNumber);
+    // Сохраняем оригинальный номер билета без изменений
+    const originalTicketNumber = ticketData.ticket_number;
+    console.log("Получен номер билета из бота:", originalTicketNumber);
     
     // Выводим в консоль для отладки
     if (urlParams.ticket_number) {
         console.log("Используем номер билета из URL параметра:", urlParams.ticket_number);
     }
 
-    // Update ticket numbers во всех местах, где отображается номер
-    document.getElementById('mainTicketNumber').textContent = formattedTicketNumber;
-    document.getElementById('qrTicketNum').textContent = formattedTicketNumber;
-    document.getElementById('qrNumberDisplay').textContent = `№ ${formattedTicketNumber}`;
+    // Обновляем номер билета во всех местах страницы
+    document.getElementById('mainTicketNumber').textContent = originalTicketNumber;
+    document.getElementById('qrTicketNum').textContent = originalTicketNumber;
+    document.getElementById('qrNumberDisplay').textContent = `№ ${originalTicketNumber}`;
 
     // Generate QR code
     const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${ticketData.ticket_number}`;
