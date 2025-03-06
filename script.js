@@ -328,9 +328,9 @@ function initApp() {
     document.getElementById('purchase-date').textContent = ticketData.date;
     document.getElementById('purchase-time').textContent = ticketData.time;
 
-    // Сохраняем оригинальный номер билета без изменений
+    // ВАЖНО: Используем номер билета, который пришел из URL без повторной генерации
     const originalTicketNumber = ticketData.ticket_number;
-    console.log("Получен номер билета из бота:", originalTicketNumber);
+    console.log("Номер билета из бота (будет использован для отображения):", originalTicketNumber);
 
     // Выводим в консоль для отладки
     if (urlParams.ticket_number) {
@@ -342,8 +342,8 @@ function initApp() {
     document.getElementById('qrTicketNum').textContent = originalTicketNumber;
     document.getElementById('qrNumberDisplay').textContent = `№ ${originalTicketNumber}`;
 
-    // Generate QR code
-    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${ticketData.ticket_number}`;
+    // Generate QR code - используем оригинальный номер для QR кода
+    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(originalTicketNumber)}`;
     document.getElementById('qrCode').src = qrCodeUrl;
 
     // Start countdown
