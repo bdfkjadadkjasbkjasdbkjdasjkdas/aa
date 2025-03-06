@@ -20,35 +20,55 @@ function generateTicket() {
     // Получаем параметры из URL или используем тестовые данные если их нет
     const params = getUrlParameters();
     
-    const carrier = params.carrier || 'ИП Патрин Н. Н.';
-    const routeNumber = params.route_number || '21';
-    const routeName = params.route_name || 'Парк "Прищепка" - Спортзал';
-    const busNumber = params.bus_number || 'х312мв124';
+    const carrier = decodeUrlParameter(params.carrier) || 'ИП Патрин Н. Н.';
+    const routeNumber = decodeUrlParameter(params.route_number) || '21';
+    const routeName = decodeUrlParameter(params.route_name) || 'Парк "Прищепка" - Спортзал';
+    const busNumber = decodeUrlParameter(params.bus_number) || 'х312мв124';
     const ticketCount = parseInt(params.ticket_count || '1');
     
-    // Рассчитываем цену на основе типа маршрута
-    const pricePerTicket = routeNumber.endsWith('т') ? 40 : 44;
-    const totalPrice = pricePerTicket * ticketCount;
+    // Используем предоставленные данные или генерируем новые
+    let totalPrice;
+    if (params.price) {
+        totalPrice = parseFloat(params.price);
+    } else {
+        // Рассчитываем цену на основе типа маршрута
+        const pricePerTicket = routeNumber.endsWith('т') ? 40 : 44;
+        totalPrice = pricePerTicket * ticketCount;
+    }
     
-    // Генерируем случайный номер билета
-    const ticketNumber = Math.floor(Math.random() * (999999999 - 950000000 + 1)) + 950000000;
-    const formattedTicketNumber = ticketNumber.toString().replace(/(\d{3})(\d{3})(\d{3})/, '$1 $2 $3');
+    // Используем предоставленный номер билета или генерируем новый
+    let formattedTicketNumber;
+    if (params.ticket_number) {
+        formattedTicketNumber = params.ticket_number;
+    } else {
+        // Генерируем случайный номер билета
+        const ticketNumber = Math.floor(Math.random() * (999999999 - 950000000 + 1)) + 950000000;
+        formattedTicketNumber = ticketNumber.toString().replace(/(\d{3})(\d{3})(\d{3})/, '$1 $2 $3');
+    }
     
-    // Получаем текущее время
-    const currentDate = new Date();
+    // Получаем дату и время из параметров URL или используем текущие
+    let formattedDate, currentTime;
     
-    // Форматируем дату
-    const formattedDate = currentDate.toLocaleDateString('ru-RU', {
-        day: '2-digit',
-        month: 'long',
-        year: 'numeric'
-    });
-    
-    // Текущее время
-    const currentTime = currentDate.toLocaleTimeString('ru-RU', {
-        hour: '2-digit',
-        minute: '2-digit'
-    });
+    if (params.date && params.time) {
+        formattedDate = params.date;
+        currentTime = params.time;
+    } else {
+        // Получаем текущее время
+        const currentDate = new Date();
+        
+        // Форматируем дату
+        formattedDate = currentDate.toLocaleDateString('ru-RU', {
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric'
+        });
+        
+        // Текущее время
+        currentTime = currentDate.toLocaleTimeString('ru-RU', {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    }
     
     // Заполняем билет
     document.getElementById('ticketForm').style.display = 'none';
@@ -133,12 +153,27 @@ function generateTicket() {
 
 // Запускаем генерацию билета при загрузке страницы
 document.addEventListener('DOMContentLoaded', function() {
+    // Получаем параметры URL
+    const params = getUrlParameters();
+    
     // Проверяем, открыта ли страница из Telegram Web App
     if (tg.initData && tg.initData.length > 0) {
-        // Если да, генерируем билет на основе данных из URL
-        generateTicket();
+        // Если страница открыта через Telegram и есть параметр auto_generate
+        if (params.auto_generate === 'true') {
+            // Генерируем билет на основе данных из URL
+            generateTicket();
+        } else {
+            // Если нет параметра auto_generate, показываем обычные опции
+            showTicketOptions();
+        }
     } else {
-        // Иначе показываем обычные опции
-        showTicketOptions();
+        // Проверяем, есть ли параметры для автоматической генерации билета
+        if (params.auto_generate === 'true') {
+            // Генерируем билет на основе данных из URL
+            generateTicket();
+        } else {
+            // Иначе показываем обычные опции
+            showTicketOptions();
+        }
     }
 });
