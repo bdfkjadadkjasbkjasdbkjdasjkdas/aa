@@ -271,7 +271,9 @@ function initApp() {
     // Принудительно используем номер билета из URL, не генерируем заново
     if (urlParams.ticket_number) {
         console.log("Номер билета из URL:", urlParams.ticket_number);
+        // Не меняем номер билета, используем полученный из URL
     }
+    console.log("Получен номер билета из бота:", ticketData.ticket_number);
 
     // Всегда преобразуем дату на русский язык, независимо от формата
     const dateRegex = /(\d+)\s+(\w+)\s+(\d+)/;
