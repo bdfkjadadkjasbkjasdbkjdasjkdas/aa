@@ -35,11 +35,14 @@ function generateExpiryTime() {
 
 // Function to display ticket info
 function displayTicket(ticketData) {
-    document.getElementById('loading').style.display = 'none';
-    document.getElementById('ticket-container').style.display = 'block';
-    
-    // Fill in ticket information
-    document.getElementById('carrier').textContent = ticketData.carrier || 'ИП Патрин Н. Н.';
+    try {
+        console.log("Отображаем данные билета:", JSON.stringify(ticketData));
+        
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('ticket-container').style.display = 'block';
+        
+        // Fill in ticket information
+        document.getElementById('carrier').textContent = ticketData.carrier || 'ИП Патрин Н. Н.';
     
     const routeText = ticketData.route_number && ticketData.route_name 
         ? `🚏 ${ticketData.route_number} ${ticketData.route_name}`
@@ -62,11 +65,20 @@ function displayTicket(ticketData) {
     } catch (e) {
         console.log("Подтверждение закрытия не поддерживается в данной версии");
     }
+    } catch (error) {
+        console.error("Ошибка при отображении билета:", error);
+        document.getElementById('loading').textContent = "Ошибка загрузки билета. Попробуйте снова.";
+        document.getElementById('loading').style.display = 'flex';
+    }
 }
 
 // Main function to initialize the app
 function initApp() {
     console.log("Начинаем инициализацию приложения...");
+    
+    // Отображаем загрузочный индикатор
+    document.getElementById('loading').style.display = 'flex';
+    document.getElementById('ticket-container').style.display = 'none';
     
     // Check if we have URL parameters with ticket data
     const urlParams = getUrlParams();
