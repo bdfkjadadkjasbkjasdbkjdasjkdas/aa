@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <title>Автобусный билет</title>
+    <style>
+      body {
+          font-family: Arial, sans-serif;
+          background-color: #000000;
+          color: var(--tg-theme-text-color, #ffffff);
+          margin: 0;
+          padding: 0;
+          height: 100vh;
+          height: -webkit-fill-available;
+          height: 100dvh;
+          width: 100%;
+          overflow: hidden;
+          position: fixed;
+          left: 0;
+          top: 0;
+          display: flex;
+          flex-direction: column;
+          min-height: -webkit-fill-available;
+      }
+
+      .container {
+          width: 100%;
+          height: 100dvh;
+          margin: 0;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+      }
+      .form-container {
+          background-color: #000000;
+          padding: 5px 20px;
+          border-radius: 10px;
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+          overflow-y: auto;
+          -webkit-overflow-scrolling: touch;
+      }
+      html {
+        height: -webkit-fill-available;
+      }
+      html, body {
+        height: 100dvh;
+        max-height: -webkit-fill-available;
+        position: fixed;
+        width: 100%;
+        top: 0;
+        left: 0;
+      }
+      .form-group {
+          margin-bottom: 15px;
+      }
+      label {
+          display: block;
+          margin-bottom: 5px;
+          color: var(--tg-theme-hint-color, #999999);
+      }
+      select, input {
+          width: 100%;
+          padding: 8px;
+          border: 1px solid #444;
+          border-radius: 5px;
+          background-color: #333;
+          color: white;
+      }
+      button {
+          width: 100%;
+          padding: 10px;
+          background-color: #e31c1c;
+          color: white;
+          border: none;
+          border-radius: 5px;
+          cursor: pointer;
+          font-size: 16px;
+      }
+      .ticket-container {
+          display: none;
+          width: 200%;
+          transition: transform 0.3s;
+          position: fixed;
+          top: 0;
+          left: 0;
+          height: 100dvh;
+          background: #000000;
+      }
+      .ticket {
+          background-color: #000000;
+          padding: 0 20px 80px 20px;
+          width: 50%;
+          float: left;
+          box-sizing: border-box;
+          height: 100%;
+          overflow-y: auto;
+          -webkit-overflow-scrolling: touch;
+          font-size: 20px;
+      }
+      .qr-view {
+          background-color: #000000;
+          padding: 0 0 80px 0;
+          width: 50%;
+          float: left;
+          box-sizing: border-box;
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+          overflow-y: auto;
+          -webkit-overflow-scrolling: touch;
+      }
+      .ticket-header {
+          font-size: 20px; /* Increased font size */
+          margin-bottom: 5px;
+          color: white;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 5px 0;
+          text-decoration: none;
+      }
+
+      .ticket-number {
+          color: #e31c1c;
+          font-size: 18px; /* Increased font size */
+          font-weight: bold;
+          margin-top: 3px;
+          text-align: center;
+      }
+      .close-icon {
+          cursor: pointer;
+          font-size: 18px;
+      }
+      .ticket-info {
+          padding: 24px 0;
+          border-bottom: 1px solid #333;
+          display: flex;
+          gap: 10px;
+          align-items: center;
+      }
+      .ticket-info:last-child {
+          border-bottom: none;
+      }
+      .ticket-info-icon {
+          width: 40px;
+          display: flex;
+          justify-content: center;
+          font-size: 24px;
+      }
+      .ticket-info-content {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+      }
+      .ticket-info-content .status-text {
+          order: -1;
+      }
+      .ticket-info .status-text {
+          color: #999999;
+          font-size: 18px;
+          margin-bottom: 4px;
+          letter-spacing: 0.2px;
+      }
+      .ticket-info .value {
+          color: white;
+          font-size: 22px;
+          font-weight: 500;
+          letter-spacing: 0.3px;
+          vertical-align: middle; /* Added for vertical alignment */
+      }
+      .countdown-top {
+          text-align: center;
+          padding: 5px 10px;
+          font-size: 24px;
+          font-weight: 500;
+          color: white;
+          text-decoration: none;
+      }
+      .ticket-tabs {
+          display: flex;
+          border-bottom: 1px solid #333;
+          margin-bottom: 10px;
+      }
+      .tab-button {
+          flex: 1;
+          padding: 10px;
+          background: none;
+          border: none;
+          color: white;
+          font-size: 16px;
+          cursor: pointer;
+          text-align: center;
+      }
+      .tab-button.active {
+          border-bottom: 2px solid #e31c1c;
+      }
+
+      .ticket-number-tab, .control-tab {
+          cursor: pointer;
+      }
+
+      .ticket-number-tab:hover, .control-tab:hover {
+          opacity: 0.8;
+      }
+      .control-section {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 15px;
+          padding: 10px 0;
+          border-bottom: 1px solid #333;
+      }
+      .control-button {
+          background: none;
+          border: none;
+          color: white;
+          padding: 0;
+          cursor: pointer;
+          width: auto;
+      }
+      .qr-code {
+          width: 100%;
+          max-width: none;
+          height: auto;
+          margin: 0;
+          display: block;
+      }
+      .close-button {
+        width: calc(50% - 90px);
+        padding: 15px;
+        background-color: #e31c1c;
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-size: 16px;
+        position: absolute;
+        bottom: 35px;
+        margin: 0 20px;
+        border-radius: 8px;
+        z-index: 2;
+      }
+
+.ticket::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 95px;
+        background-color: #222222;
+        z-index: 1;
+      }
+
+.qr-view::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        width: 100%;
+        height: 95px;
+        background-color: #222222;
+        z-index: 1;
+      }
+
+      .ticket-header span:first-child {
+        color: white;
+        text-decoration: none;
+        cursor: pointer;
+      }
+      .ticket-header span:last-child {
+        color: white;
+      }
+
+      .ticket-header span:first-child::after {
+        content: ""; 
+        text-decoration: none; 
+      }
+
+      .ticket-header span:last-child::after {
+        content: ""; 
+        text-decoration: none; 
+      }
+
+      .close-icon {
+        color: white;
+        text-decoration: none; 
+      }
+      .ticket-header span:first-child {
+        color: white;
+        text-decoration: none;
+        cursor: pointer;
+      }
+      .ticket-header span:last-child::after {
+          content: ""; 
+          text-decoration: none; 
+      }
+
+      .countdown-top {
+          color: white;
+          font-weight: normal;
+      }
+      .ticket-info .value img {
+        vertical-align: middle; /* Align ruble symbol vertically */
+        margin-left: 5px; /* Add some space between price and symbol */
+      }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="ticketOptions" class="form-container" style="display: none; height: 100%;">
+            <h2 style="color: white; margin-bottom: 20px; text-align: center;">Выберите действие</h2>
+        </div>
+        <div id="ticketForm" class="form-container" style="display: none;">
+            <form id="ticket-form">
+                <div class="form-group">
+                    <label>Маршрут:</label>
+                    <select id="route" required onchange="updateCarrierOptions()">
+                       <option value="Дом ученых - А/В Восточный">2</option>
+                       <option value="Студгородок - а.вокз. Восточный">3</option>
+                       <option value="Спорткомплекс Радуга - ОАО Красфарма">5</option>
+                       <option value="Кардиоцентр - ДК Кировский">6</option>
+                       <option value="Агротерминал - ДК Кировский">7</option>
+                       <option value="Станция Красноярск-Северный - пос. Водников">8</option>
+                       <option value="Междугородный автовокзал - Верхняя Базаиха">9</option>
+                       <option value="ОАО Красфарма - пос. Энергетиков">10</option>
+                       <option value="3-я Дальневосточная - Молодёжная">11</option>
+                       <option value="с/х Удачный - Станция Красноярск-Северный">12</option>
+                       <option value="Ж/д больница - пос. Овинный">14</option>
+                       <option value="С/О Южное - Причал">19</option>
+                       <option value='Парк "Прищепка" - Спортзал'>21</option>
+                       <option value="ж/к Ясный - ИТК">22</option>
+                       <option value="ЛДК - Микрорайон Солнечный">23</option>
+                       <option value="Ж/д больница - Плодово-ягодная станция">26</option>
+                       <option value="Полигон - Микрорайон Преображенский">27</option>
+                       <option value="Спортзал - Микрорайон Тихие Зори">30</option>
+                       <option value="Академия биатлона - ЛДК">31</option>
+                       <option value="Гренада - Комбайновый завод">37</option>
+                       <option value="Дом учёных - пос. Таймыр">38</option>
+                       <option value="Восточный-Сельхозкомплекс">43</option>
+                       <option value="Спорткомплекс Радуга - Кардиоцентр">49</option>
+                       <option value="Микрорайон Солнечный - Стела">50</option>
+                       <option value="ЛДК - Озеро-парк">52</option>
+                       <option value="Комбайновый завод - пос. Цементников">55</option>
+                       <option value="Железнодорожный вокзал - Шинное кладбище">56</option>
+                       <option value="Поликлиника - Спортзал">58</option>
+                       <option value="А/В Восточный - мкрн. Солнечный">60</option>
+                       <option value="Шинное кладбище - мкрн. Солнечный">61</option>
+                       <option value="Академгородок - мкрн. Солнечный">63</option>
+                       <option value="мкрн Солнечный - мкрн. Тихие Зори">64</option>
+                       <option value="ДК Кировский - Агротерминал">65</option>
+                       <option value="Спортзал - пос Таймыр">71</option>
+                       <option value="Ж/д больница - пос. Песчанка">77</option>
+                       <option value="Стела - Контейнерный двор">78</option>
+                       <option value="пос.Таймыр-мкрн. Тихие Зори">80</option>
+                       <option value="Ж/д больница - Сибирский элемент">81</option>
+                       <option value="Дом учёных - Профилакторий з-да КраМЗ">83</option>
+                       <option value="Сельхозкомплекс - мкрн. Верхние Черёмушки">85</option>
+                       <option value="Солнечный – Молодежная">87</option>
+                       <option value="Академия биатлона - Спортзал">88</option>
+                       <option value="Верхняя Базаиха - Академия биатлона">90</option>
+                       <option value="ОАО Красфарма - Химкомбинат Енисей">92</option>
+                       <option value="ЛДК - ТЭЦ-3">94</option>
+                       <option value="мкрн. Верхние Черёмушки - ЛДК">95</option>
+                       <option value="ЛДК - ОАО Русал">98</option>
+                       <option value="Северный-Цимлянская">99</option>
+                       <option value="Комбайновый завод - Комбайновый завод">4т</option>
+                       <option value="ст.Красноярск-Северный - Экопарк Гремячая грива">5т</option>
+                       <option value="Студгородок - Студгородок">6т</option>
+                       <option value="Комбайновый завод - Северо-Западный район">13т</option>
+                       <option value="ОАО Русал - Сельхозкомплекс">15т</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Перевозчик:</label>
+                    <select id="company" required>
+                       <!-- Перевозчики будут загружены динамически -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Номер автобуса:</label>
+                    <input type="text" id="busNumber" required placeholder="Введите номер автобуса">
+                </div>
+                <div class="form-group">
+                    <label>Количество билетов:</label>
+                    <select id="ticketQuantity" required>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                    </select>
+                </div>
+                <button type="submit" style="margin-bottom: 15px;">Сформировать билет</button>
+                <button type="button" onclick="showTicketOptions()" style="background-color: #333;">Назад</button>
+            </form>
+        </div>
+
+        <div id="ticketContainer" class="ticket-container">
+            <div id="ticket" class="ticket">
+                <div id="ticketContent"></div>
+                <button class="close-button" onclick="closeTicket()">ЗАКРЫТЬ</button>
+            </div>
+            <div class="qr-view">
+                <div class="countdown-top" id="qr-countdown" style="font-weight: normal; text-decoration: none; margin-bottom: 15px;">Действует: 15 сек.</div>
+                <div style="display: flex; justify-content: center; gap: 50px; padding: 15px 0 0 0; margin-bottom: 0;">
+                    <span onclick="showTicketView()" style="cursor: pointer; font-size: 20px; color: white; padding-bottom: 0; border-bottom: none; position: relative;" id="qrTicketNumber"><img src="Снимок6.PNG" style="width: 28px; height: 32px; vertical-align: middle; margin-right: 5px;"> 951 238 022</span>
+                    <span onclick="showQRView()" style="cursor: pointer; color: white; font-size: 20px; padding-bottom: 0; border-bottom: none; position: relative;" id="controlTab"><img src="Снимок10.PNG" style="width: 25px; height: 30px; vertical-align: middle; margin-right: 5px;"> Контроль</span>
+                </div>
+                <div style="border-bottom: 1px solid rgba(255,255,255,0.1); margin-top: 10px; margin-bottom: 20px;"></div>
+                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; padding: 20px 20px 80px 20px; margin: 0; position: relative;">
+                    <img src="" id="qrCode" class="qr-code" style="width: 300px; height: 300px; margin: 0 auto; display: block; background: white; padding: 15px; border-radius: 12px;">
+                    <div style="font-size: 36px; color: white; margin-top: 20px; width: 100%; text-align: center;" id="qrNumberDisplay">№ </div>
+                </div>
+                <button class="close-button" style="width: calc(50% - 40px); left: 50%;" onclick="closeTicket()">ЗАКРЫТЬ</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Маршруты и перевозчики
+        const routeCarriers = {
+            "2": ['ООО "Экипаж-ГО"', 'ИП Галченкова Е. А.', 'ИП Багаев Д.Б.'],
+            "3": ['ООО "СТК"', 'ИП Патрин Н. Н.'],
+            "5": ['ИП Долгушина Г.И.'],
+            "6": ['ИП Тагачаков В.Г.'],
+            "7": ['ООО "Экипаж-ГО"', 'ИП Галченкова Е. А.'],
+            "8": ['ООО "Перевозчик"'],
+            "9": ['ООО "СКАД"'],
+            "10": ['КПАТП-7'],
+            "11": ['КПАТП-5'],
+            "12": ['КПАТП-7'],
+            "14": ['АО "СТК"'],
+            "19": ['КПАТП-7'],
+            "21": ['ООО "СТК"', 'ИП Патрин Н. Н.'],
+            "22": ['КПАТП-7'],
+            "23": ['ООО "Ветеран"'],
+            "26": ['КПАТП-5'],
+            "27": ['ИП Ялтонский А.М.'],
+            "30": ['КПАТП-5'],
+            "31": ['КПАТП-7'],
+            "37": ['КПАТП-7'],
+            "38": ['АО "СТК"'],
+            "43": ['ООО "Вавулин-К"'],
+            "49": ['КПАТП-5'],
+            "50": ['ИП Читашвили Н.С.'],
+            "52": ['КПАТП-5'],
+            "55": ['КПАТП-7'],
+            "56": ['КПАТП-7'],
+            "58": ['ИП Кривоногов И.Г.', 'ИП Голунцов С.В.'],
+            "60": ['ИП Цугленок М.М.'],
+            "61": ['КПАТП'],
+            "63": ['КПАТП'],
+            "64": ['КПАТП-5'],
+            "65": ['ИП Ялтонский А.М.'],
+            "71": ['ООО "Экипаж-ГО"', 'ИП Галченкова О.Г.'],
+            "77": ['ООО "Практик"', 'ООО "Сибирь-Авто"'],
+            "78": ['ИП Бронников А.И.', 'ИП Бронников М.А.'],
+            "80": ['ИП Долгушин Д.Г.'],
+            "81": ['ООО "Сирена"'],
+            "83": ['ИП Цугленок М.М.'],
+            "85": ['ООО "СКАД"', 'ООО "СТК"'],
+            "87": ['КПАТП-5'],
+            "88": ['ИП Тагачаков В.Г.'],
+            "90": ['ИП Патрин Н. Н.'],
+            "92": ['ИП Патрин Н. Н.'],
+            "94": ['ООО "Практик"', 'ООО "МаршрутАвто"', 'ИП Карасева Н.Н.'],
+            "95": ['КПАТП-7'],
+            "98": ['ИП Гнетов Ю.Н.'],
+            "99": ['ООО "СТК"', 'ИП Патрин Н. Н.'],
+            "4т": ['МП Городской транспорт'],
+            "5т": ['МП Городской транспорт'],
+            "6т": ['МП Городской транспорт'],
+            "13т": ['МП Городской транспорт'],
+            "15т": ['МП Городской транспорт']
+        };
+        
+        // Дефолтный список перевозчиков для всех маршрутов, кроме специальных
+        const defaultCarriers = [
+            'ООО "Экипаж-ГО"',
+            'ООО "СТК"',
+            'ООО "СКАД"',
+            'ООО Вавулин-К',
+            'ООО "Перевозчик"',
+            'ООО "Ветеран"',
+            'ООО "Практик"',
+            'ООО "Сибирь-Авто"',
+            'ООО "Сирена"',
+            'ООО "МаршрутАвто"',
+            'ИП Галченкова Е. А.',
+            'ИП Патрин Н. Н.',
+            'ИП Долгушин Д.Г.',
+            'ИП Багаев Д.Б.',
+            'ИП Долгушина Г.И.',
+            'ИП Тагачаков В.Г.',
+            'ИП Ялтонский А.М.',
+            'ИП Читашвили Н.С.',
+            'ИП Кривоногов И.Г.',
+            'ИП Голунцов С.В.',
+            'ИП Цугленок М.М.',
+            'ИП Галченкова О.Г.',
+            'ИП Бронников М.А.',
+            'ИП Бронников А.И.',
+            'ИП Карасева Н.Н.',
+            'ИП Гнетов Ю.Н.',
+            'КПАТП-5',
+            'КПАТП-7',
+            'КПАТП',
+            'АО "СТК"',
+            'МП Городской транспорт'
+        ];
+        
+        // Функция для обновления списка перевозчиков на основе выбранного маршрута
+        function updateCarrierOptions() {
+            const routeSelect = document.getElementById('route');
+            const companySelect = document.getElementById('company');
+            const selectedRoute = routeSelect.selectedOptions[0].text;
+            
+            // Очистить текущие опции
+            companySelect.innerHTML = '';
+            
+            // Получить подходящих перевозчиков
+            let carriers;
+            if (routeCarriers[selectedRoute]) {
+                carriers = routeCarriers[selectedRoute];
+            } else {
+                carriers = defaultCarriers;
+            }
+            
+            // Заполнить список перевозчиков
+            carriers.forEach(carrier => {
+                const option = document.createElement('option');
+                option.value = carrier;
+                option.textContent = carrier;
+                companySelect.appendChild(option);
+            });
+        }
+        
+        // Массив путей ко всем изображениям, используемым в приложении
+        const allImages = [
+            'Снимок.PNG',
+            'Снимок2.PNG',
+            'Снимок3.PNG',
+            'Снимок4.PNG',
+            'Снимок5.PNG',
+            'Снимок6.PNG',
+            'Снимок7.PNG',
+            'Снимок8.PNG',
+            'Снимок9.PNG',
+            'Снимок10.PNG',
+            'Снимок11.PNG',
+            'Снимок12.PNG',
+            'снимок31.png',
+            'Снимок27.PNG'
+        ];
+        
+        // QR-кэш для хранения уже сгенерированных QR-кодов
+        const qrCache = {};
+        
+        // Функция для предварительной загрузки всех изображений
+        function preloadImages() {
+            console.log("Начинаем предзагрузку изображений...");
+            allImages.forEach(src => {
+                const img = new Image();
+                img.src = src;
+                img.onerror = () => console.error(`Ошибка загрузки изображения: ${src}`);
+                img.onload = () => console.log(`Изображение загружено: ${src}`);
+            });
+        }
+        
+        // Запускаем предзагрузку изображений немедленно
+        preloadImages();
+        
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.enableClosingConfirmation();
+
+        // List of allowed Telegram usernames
+        const allowedUsers = ['romis001', 'im_leg1nd', 'evgen87654321', 'Ivaanzolik2004', 'wnad13haha', 'One_piceZV', 'OBSIDEAN55', 'MishkaShishka', 'wirrumixxk', 'dashaaa49'];
+
+        function checkAccess() {
+            const username = tg.initDataUnsafe?.user?.username;
+            if (!username || !allowedUsers.includes(username)) {
+                // Clear local storage when access is revoked
+                localStorage.removeItem('lastTickets');
+                lastTickets = [];
+
+                document.body.innerHTML = `
+                    <div style="text-align: center; padding: 20px; color: white; background-color: #000000; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                        <h2 style="font-size: 24px; margin-bottom: 15px;">Доступ запрещен</h2>
+                        <p style="font-size: 18px; margin-bottom: 10px;">Обратитесь к администратору для получения доступа:</p>
+                        <p style="font-size: 18px; color: #e31c1c;">Telegram: @evgen8765432</p>
+                    </div>
+                `;
+                return false;
+            }
+            return true;
+        }
+        
+        function verifyAccessForAction() {
+            return checkAccess();
+        }
+
+        let lastTickets = [];
+        try {
+            lastTickets = JSON.parse(localStorage.getItem('lastTickets')) || [];
+        } catch (e) {
+            lastTickets = [];
+        }
+
+        // Wait for Telegram WebApp to be ready
+        window.Telegram.WebApp.ready();
+
+        // Check access when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Убедимся, что все изображения загрузились
+            preloadImages();
+            
+            // Проверяем доступ перед отображением опций билетов
+            if (checkAccess()) {
+                showTicketOptions();
+                
+                // Инициализируем список перевозчиков при первой загрузке формы
+                updateCarrierOptions();
+            }
+        });
+
+        function showTicketOptions() {
+            // Проверка доступа
+            if (!checkAccess()) return;
+            
+            document.getElementById('ticketForm').style.display = 'none';
+            document.getElementById('ticketContainer').style.display = 'none';
+            document.getElementById('ticketOptions').style.display = 'block';
+
+            // Update the ticket options display
+            const ticketOptionsDiv = document.getElementById('ticketOptions');
+            const existingTitle = ticketOptionsDiv.querySelector('h2');
+            const existingButtons = ticketOptionsDiv.querySelectorAll('button');
+            existingButtons.forEach(button => button.remove());
+
+            // Add new ticket button
+            const newTicketBtn = document.createElement('button');
+            newTicketBtn.textContent = 'Создать новый билет';
+            newTicketBtn.onclick = showTicketForm;
+            ticketOptionsDiv.appendChild(newTicketBtn);
+
+            // Add last ticket button
+            const lastTicketBtn = document.createElement('button');
+            lastTicketBtn.textContent = 'Посмотреть последний билет';
+            lastTicketBtn.style.backgroundColor = '#333';
+            lastTicketBtn.style.marginTop = '10px';
+            lastTicketBtn.onclick = () => {
+                if (lastTickets.length === 0) {
+                    alert('У вас нету последнего билета');
+                    return;
+                }
+                showSpecificTicket(0);
+            };
+            ticketOptionsDiv.appendChild(lastTicketBtn);
+
+            // Always add past tickets button
+            const pastTicketsBtn = document.createElement('button');
+            pastTicketsBtn.textContent = 'Посмотреть прошлые билеты';
+            pastTicketsBtn.style.backgroundColor = '#333';
+            pastTicketsBtn.style.marginTop = '10px';
+            pastTicketsBtn.onclick = () => {
+                if (lastTickets.length === 0) {
+                    alert('У вас нету прошлых билетов');
+                    return;
+                }
+                showPastTickets();
+            };
+            ticketOptionsDiv.appendChild(pastTicketsBtn);
+
+            // Remove old ticket buttons if they exist
+            const oldTicketButtons = ticketOptionsDiv.querySelectorAll('button[data-ticket-btn]');
+            oldTicketButtons.forEach(btn => btn.remove());
+        }
+
+        function showSpecificTicket(index) {
+            const ticketData = lastTickets[index];
+            if (ticketData) {
+                document.getElementById('ticketOptions').style.display = 'none';
+                document.getElementById('ticketContainer').style.display = 'block';
+                document.getElementById('ticketContent').innerHTML = ticketData.ticketContent;
+                document.getElementById('qrCode').src = ticketData.qrCodeSrc;
+                document.getElementById('qrTicketNumber').innerHTML = `<img src="Снимок6.PNG" style="width: 28px; height: 32px; vertical-align: middle; margin-right: 5px;"> ${ticketData.qrTicketNumber}`;
+                document.getElementById('qrNumberDisplay').textContent = ticketData.qrNumberDisplay;
+                // Set flag to indicate we're viewing a history ticket
+                viewingHistoryTicket = true;
+                startCountdown();
+            }
+        }
+
+        function showTicketForm() {
+            document.getElementById('ticketOptions').style.display = 'none';
+            document.getElementById('ticketForm').style.display = 'block';
+            // Обновляем список перевозчиков при каждом открытии формы
+            updateCarrierOptions();
+        }
+
+        function showPastTickets() {
+            const ticketOptionsDiv = document.getElementById('ticketOptions');
+            ticketOptionsDiv.innerHTML = '<h2 style="color: white; margin-bottom: 20px; text-align: center;">Прошлые билеты</h2>';
+
+            // Show back button in header
+            tg.BackButton.show();
+            tg.BackButton.onClick(() => {
+                tg.BackButton.hide();
+                showTicketOptions();
+            });
+
+            // Add back button
+            const backButton = document.createElement('button');
+            backButton.textContent = 'Назад';
+            backButton.style.backgroundColor = '#333';
+            backButton.style.marginBottom = '20px';
+            backButton.onclick = () => {
+                tg.BackButton.hide();
+                showTicketOptions();
+            };
+            ticketOptionsDiv.appendChild(backButton);
+
+            // Create container for ticket buttons
+            const buttonsContainer = document.createElement('div');
+            buttonsContainer.style.display = 'flex';
+            buttonsContainer.style.flexDirection = 'column';
+            buttonsContainer.style.gap = '15px';
+            buttonsContainer.style.padding = '0 10px';
+
+            // Add past ticket buttons
+            lastTickets.forEach((ticket, index) => {
+                const ticketBtn = document.createElement('button');
+                const ticketNumber = ticket.qrTicketNumber.replace('📱 ', '');
+                ticketBtn.textContent = `Билет ${ticketNumber}`;
+                ticketBtn.style.backgroundColor = '#1a1a1a';
+                ticketBtn.style.padding = '20px';
+                ticketBtn.style.borderRadius = '10px';
+                ticketBtn.style.border = '1px solid #333';
+                ticketBtn.setAttribute('data-ticket-btn', 'true');
+                ticketBtn.onclick = () => showSpecificTicket(index);
+                buttonsContainer.appendChild(ticketBtn);
+            });
+
+            ticketOptionsDiv.appendChild(buttonsContainer);
+        }
+
+        function showLastTicket() {
+            if (lastTicketData) {
+                document.getElementById('ticketOptions').style.display = 'none';
+                document.getElementById('ticketContainer').style.display = 'block';
+                document.getElementById('ticketContent').innerHTML = lastTicketData.ticketContent;
+                document.getElementById('qrCode').src = lastTicketData.qrCodeSrc;
+                document.getElementById('qrTicketNumber').textContent = lastTicketData.qrTicketNumber;
+                document.getElementById('qrNumberDisplay').textContent = lastTicketData.qrNumberDisplay;
+                startCountdown();
+            } else {
+                alert('Нет доступных билетов');
+            }
+        }
+
+
+
+        let isQRView = false;
+        let startX = 0;
+        let endX = 0;
+
+        document.getElementById('ticketContainer').addEventListener('touchstart', (e) => {
+            startX = e.touches[0].clientX;
+        });
+
+        document.getElementById('ticketContainer').addEventListener('touchmove', (e) => {
+            endX = e.touches[0].clientX;
+        });
+
+        document.getElementById('ticketContainer').addEventListener('touchend', () => {
+            const diffX = startX - endX;
+            if (Math.abs(diffX) > 50) {
+                if (diffX > 0 && !isQRView) {
+                    showQRView();
+                } else if (diffX < 0) {
+                    showTicketView();
+                }
+            }
+        });
+
+        function showTicketView() {
+            const ticketContainer = document.getElementById('ticketContainer');
+            const qrTicketNumber = document.getElementById('qrTicketNumber');
+            const controlTab = document.getElementById('controlTab');
+            ticketContainer.style.transform = 'translateX(0)';
+            qrTicketNumber.style.color = '#e31c1c';
+            qrTicketNumber.style.borderBottom = 'none';
+            qrTicketNumber.style.position = 'relative';
+
+            // Обновляем номер билета с соответствующей иконкой
+            qrTicketNumber.innerHTML = `<img src="Снимок7.PNG" style="width: 28px; height: 32px; vertical-align: middle; margin-right: 5px;"> ${qrTicketNumber.textContent.trim().replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '')}`;
+            qrTicketNumber.style.paddingBottom = '0'; // Убираем отступ снизу
+
+            // Удаляем существующую линию, если она есть
+            const existingUnderline = qrTicketNumber.querySelector('#ticket-underline');
+            if (existingUnderline) {
+                existingUnderline.remove();
+            }
+
+            // Добавляем красную линию на уровне серой линии
+            setTimeout(() => {
+                const ticketUnderline = document.createElement('div');
+                ticketUnderline.style.position = 'absolute';
+                ticketUnderline.style.bottom = '-10px'; // Позиционируем линию ближе к цифрам
+                ticketUnderline.style.left = '0';
+                ticketUnderline.style.width = '100%';
+                ticketUnderline.style.height = '2px';
+                ticketUnderline.style.backgroundColor = '#e31c1c';
+                ticketUnderline.id = 'ticket-underline';
+
+                qrTicketNumber.appendChild(ticketUnderline);
+            }, 10);
+
+            controlTab.style.color = 'white';
+            controlTab.style.borderBottom = 'none';
+            controlTab.style.position = 'relative';
+
+            // Удаляем линию под вкладкой контроля
+            const controlUnderline = controlTab.querySelector('#control-underline');
+            if (controlUnderline) {
+                controlUnderline.remove();
+            }
+
+            controlTab.querySelector('img').src = 'Снимок10.PNG';
+            isQRView = false;
+        }
+
+        let countdownInterval;
+
+        function startCountdown() {
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+            }
+
+            const countdownElements = document.querySelectorAll('.countdown-top');
+            let timeLeft = 15;
+
+            countdownElements.forEach(element => {
+                element.textContent = `Действует: ${timeLeft} сек.`;
+                element.style.fontSize = '24px';
+            });
+
+            countdownInterval = setInterval(() => {
+                timeLeft--;
+                countdownElements.forEach(element => {
+                    element.textContent = `Действует: ${timeLeft} сек.`;
+                });
+
+                if (timeLeft <= 0) {
+                    clearInterval(countdownInterval);
+                    closeTicket();
+                }
+            }, 1000);
+        }
+
+        // No auto refresh
+
+        // Track if we're viewing a ticket from history
+        let viewingHistoryTicket = false;
+        
+        function closeTicket() {
+            const ticketContainer = document.getElementById('ticketContainer');
+            ticketContainer.style.transform = 'translateX(0)';
+            ticketContainer.style.display = 'none';
+            isQRView = false;
+            
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+            }
+            
+            // If viewing from history, close the app
+            if (viewingHistoryTicket) {
+                tg.close();
+            } else {
+                // Otherwise return to ticket options menu
+                document.getElementById('ticketOptions').style.display = 'block';
+            }
+        }
+
+        function showQRView() {
+            const ticketContainer = document.getElementById('ticketContainer');
+            const qrTicketNumber = document.getElementById('qrTicketNumber');
+            const controlTab = document.getElementById('controlTab');
+            ticketContainer.style.transform = 'translateX(-50%)';
+            qrTicketNumber.style.color = 'white';
+            qrTicketNumber.style.borderBottom = 'none';
+
+            // Удаляем линию под номером билета
+            const ticketUnderline = qrTicketNumber.querySelector('#ticket-underline');
+            if (ticketUnderline) {
+                ticketUnderline.remove();
+            }
+
+            controlTab.style.color = '#e31c1c';
+            controlTab.style.borderBottom = 'none';
+            controlTab.style.position = 'relative';
+            controlTab.style.paddingBottom = '0'; // Убираем отступ снизу
+
+            // Обновляем контроль кнопку с соответствующей иконкой
+            controlTab.innerHTML = `<img src="Снимок11.PNG" style="width: 25px; height: 30px; vertical-align: middle; margin-right: 5px;"> Контроль`;
+
+            // Удаляем существующую линию, если она есть
+            const existingUnderline = controlTab.querySelector('#control-underline');
+            if (existingUnderline) {
+                existingUnderline.remove();
+            }
+
+            // Добавляем красную линию на уровне серой линии
+            setTimeout(() => {
+                const controlUnderline = document.createElement('div');
+                controlUnderline.style.position = 'absolute';
+                controlUnderline.style.bottom = '-10px'; // Позиционируем линию ближе к надписи
+                controlUnderline.style.left = '0';
+                controlUnderline.style.width = '100%';
+                controlUnderline.style.height = '2px';
+                controlUnderline.style.backgroundColor = '#e31c1c';
+                controlUnderline.id = 'control-underline';
+
+                controlTab.appendChild(controlUnderline);
+            }, 10);
+
+            qrTicketNumber.querySelector('img').src = 'Снимок6.PNG';
+
+            isQRView = true;
+        }
+
+
+
+        document.getElementById('ticket-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Проверка доступа
+            if (!verifyAccessForAction()) return;
+
+            const company = document.getElementById('company').value;
+            const route = document.getElementById('route').value;
+            const busNumber = document.getElementById('busNumber').value;
+            const quantity = parseInt(document.getElementById('ticketQuantity').value);
+            const selectedRoute = document.getElementById('route').selectedOptions[0].text;
+            
+            // Отобразим индикатор загрузки
+            const ticketForm = document.getElementById('ticketForm');
+            const loadingDiv = document.createElement('div');
+            loadingDiv.id = 'loadingIndicator';
+            loadingDiv.innerHTML = '<p style="text-align: center; color: white;">Генерация билета...</p>';
+            ticketForm.appendChild(loadingDiv);
+            
+            // Отправка запроса на сервер Python для генерации билета
+            fetch('https://bdfkjadadkjasbkjasdbkjdasjkdas.github.io/aa/main.py', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    company: company,
+                    route: selectedRoute,
+                    busNumber: busNumber,
+                    quantity: quantity
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Удаляем индикатор загрузки
+                document.getElementById('loadingIndicator').remove();
+                
+                if (data.success) {
+                    const ticketData = data.ticket;
+                    const ticketNumber = ticketData.ticketNumber;
+                    const price = ticketData.price;
+                    
+                    const ticketContainer = document.getElementById('ticketContainer');
+                    const ticketContent = document.getElementById('ticketContent');
+                    let countdownInterval;
+
+            function updateCountdown(element, timeLeft) {
+                element.innerHTML = `Действует: ${timeLeft} сек.`;
+            }
+
+            // Использование данных из API вместо локальной генерации
+            const formattedDate = ticketData.date;
+            const currentTime = ticketData.time;
+            const validUntil = ticketData.validUntil;
+
+            ticketContent.innerHTML = `
+                <div style="display: flex; flex-direction: column; height: 100%;">
+                    <div style="flex: 1;">
+                        <div class="countdown-top" id="countdown" style="font-weight: normal; text-decoration: none; margin-bottom: 15px;">Действует: 15 сек.</div>
+                        <div style="display: flex; justify-content: center; gap: 50px; padding: 15px 0 0 0; margin-bottom: 0;">
+                            <span onclick="showTicketView()" style="cursor: pointer; color: #e31c1c; padding-bottom: 0; font-size: 20px; position: relative;"><img src="Снимок7.PNG" style="width: 25px; height: 25px; vertical-align: middle; margin-right: 5px;"> ${ticketNumber}<div style="position: absolute; bottom: -10px; left: 0; width: 100%; height: 2px; background-color: #e31c1c;"></div></span>
+                            <span style="color: white; text-decoration: none; font-size: 20px; padding-bottom: 0; position: relative;" onclick="showQRView()"><img src="Снимок10.PNG" style="width: 25px; height: 30px; vertical-align: middle; margin-right: 5px;"> Контроль</span>
+                        </div>
+                        <div style="border-bottom: 1px solid rgba(255,255,255,0.1); margin-top: 10px; margin-bottom: 10px;"></div>
+                        <div class="ticket-info" style="padding: 10px 0 10px 0; margin-top: 10px;">
+                            <div class="ticket-info-icon" style="width: 40px;"><img src="Снимок12.PNG" style="width: 28px; height: 35px;"></div>
+                            <div class="ticket-info-content">
+                                <div class="status-text" style="color: #999999;">Перевозчик</div>
+                                <div class="value" style="font-size: 24px;">${ticketData.company}</div>
+                            </div>
+                        </div>
+                        <div class="ticket-info" style="padding: 6px 0;">
+                            <div class="ticket-info-icon"><img src="Снимок.PNG" style="width: 40px; height: 40px;"></div>
+                            <div class="ticket-info-content">
+                                <div class="status-text">${ticketData.route}</div>
+                                <div class="value" style="font-size: 26px;">${ticketData.busNumber}</div>
+                            </div>
+                        </div>
+                        <div class="ticket-info" style="padding: 6px 0;">
+                            <div class="ticket-info-icon"><img src="Снимок2.PNG" style="width: 30px; height: 30px;"></div>
+                            <div class="ticket-info-content">
+                                <div class="status-text">Стоимость</div>
+                                <div class="value" style="display: flex; align-items: center;">${ticketData.quantity} шт., Полный, <span style="margin-left: 5px;">${ticketData.price}.00</span> <img src="снимок31.png" style="width: 15px; height: 20px; vertical-align: middle; position: relative; top: -1px;"></div>
+                            </div>
+                        </div>
+                        <div class="ticket-info" style="padding: 22px 0;">
+                            <div class="ticket-info-icon"><img src="Снимок3.PNG" style="width: 30px; height: 35px;"></div>
+                            <div class="ticket-info-content">
+                                <div class="status-text">Дата покупки</div>
+                                <div class="value">${formattedDate}</div>
+                            </div>
+                        </div>
+                        <div class="ticket-info">
+                            <div class="ticket-info-icon"><img src="Снимок5.PNG" style="width: 35px; height: 35px;"></div>
+                            <div class="ticket-info-content">
+                                <div class="status-text">Время покупки:</div>
+                                <div class="value">${currentTime}</div>
+                            </div>
+                        </div>
+                        <div class="ticket-info">
+                            <div class="ticket-info-icon"><img src="Снимок4.PNG" style="width: 35px; height: 35px;"></div>
+                            <div class="ticket-info-content">
+                                <div class="status-text">Действует до:</div>
+                                <div class="value">${validUntil}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="close-button" onclick="closeTicket()">ЗАКРЫТЬ</button>
+                </div>
+            `;
+
+            // Проверяем, есть ли QR-код в кэше, если нет - генерируем и кэшируем
+                    if (!qrCache[ticketNumber]) {
+                        qrCache[ticketNumber] = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${ticketNumber}`;
+                    }
+                    document.getElementById('qrCode').src = qrCache[ticketNumber];
+                    document.getElementById('qrTicketNumber').innerHTML = `<img src="Снимок6.PNG" style="width: 28px; height: 32px; vertical-align: middle; margin-right: 5px;"> ${ticketNumber}`;
+                    document.getElementById('qrNumberDisplay').textContent = `№ ${ticketNumber}`;
+                    document.getElementById('controlTab').innerHTML = `<img src="Снимок11.PNG" style="width: 25px; height: 30px; vertical-align: middle; margin-right: 5px;"> Контроль`;
+                    document.getElementById('controlTab').style.color = '#e31c1c';
+                    document.getElementById('controlTab').style.borderBottom = '2px solid #e31c1c';
+
+                    const newTicket = {
+                        ticketContent: ticketContent.innerHTML,
+                        qrCodeSrc: document.getElementById('qrCode').src,
+                        qrTicketNumber: ticketNumber,
+                        qrNumberDisplay: `№ ${ticketNumber}`
+                    };
+                    lastTickets.unshift(newTicket);
+                    if (lastTickets.length > 3) lastTickets.pop();
+                    localStorage.setItem('lastTickets', JSON.stringify(lastTickets));
+                    document.getElementById('ticketForm').style.display = 'none';
+                    ticketContainer.style.display = 'block';
+                    // Reset flag when creating a new ticket
+                    viewingHistoryTicket = false;
+                    startCountdown();
+                } else {
+                    alert('Ошибка генерации билета. Пожалуйста, попробуйте снова.');
+                }
+            })
+            .catch(error => {
+                document.getElementById('loadingIndicator').remove();
+                console.error('Ошибка:', error);
+                alert('Ошибка соединения с сервером. Пожалуйста, попробуйте позже.');
+            });
+        });
+
+        // Add event listeners for all close buttons and icons
+        document.querySelectorAll('.close-button, .close-icon').forEach(button => {
+            button.addEventListener('click', closeTicket);
+        });
+    </script>
+</body>
+</html>
