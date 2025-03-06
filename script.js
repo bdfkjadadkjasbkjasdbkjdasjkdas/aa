@@ -1,4 +1,3 @@
-
 // Получение данных из Telegram Web App
 const tg = window.Telegram.WebApp;
 tg.expand();
@@ -7,11 +6,11 @@ tg.expand();
 function getUrlParameters() {
     const urlParams = new URLSearchParams(window.location.search);
     const params = {};
-    
+
     for (const [key, value] of urlParams.entries()) {
         params[key] = value;
     }
-    
+
     return params;
 }
 
@@ -19,13 +18,13 @@ function getUrlParameters() {
 function generateTicket() {
     // Получаем параметры из URL или используем тестовые данные если их нет
     const params = getUrlParameters();
-    
+
     const carrier = decodeUrlParameter(params.carrier) || 'ИП Патрин Н. Н.';
     const routeNumber = decodeUrlParameter(params.route_number) || '21';
     const routeName = decodeUrlParameter(params.route_name) || 'Парк "Прищепка" - Спортзал';
     const busNumber = decodeUrlParameter(params.bus_number) || 'х312мв124';
     const ticketCount = parseInt(params.ticket_count || '1');
-    
+
     // Используем предоставленные данные или генерируем новые
     let totalPrice;
     if (params.price) {
@@ -35,7 +34,7 @@ function generateTicket() {
         const pricePerTicket = routeNumber.endsWith('т') ? 40 : 44;
         totalPrice = pricePerTicket * ticketCount;
     }
-    
+
     // Используем предоставленный номер билета или генерируем новый
     let formattedTicketNumber;
     if (params.ticket_number) {
@@ -45,38 +44,38 @@ function generateTicket() {
         const ticketNumber = Math.floor(Math.random() * (999999999 - 950000000 + 1)) + 950000000;
         formattedTicketNumber = ticketNumber.toString().replace(/(\d{3})(\d{3})(\d{3})/, '$1 $2 $3');
     }
-    
+
     // Получаем дату и время из параметров URL или используем текущие
     let formattedDate, currentTime;
-    
+
     if (params.date && params.time) {
         formattedDate = params.date;
         currentTime = params.time;
     } else {
         // Получаем текущее время
         const currentDate = new Date();
-        
+
         // Форматируем дату
         formattedDate = currentDate.toLocaleDateString('ru-RU', {
             day: '2-digit',
             month: 'long',
             year: 'numeric'
         });
-        
+
         // Текущее время
         currentTime = currentDate.toLocaleTimeString('ru-RU', {
             hour: '2-digit',
             minute: '2-digit'
         });
     }
-    
+
     // Заполняем билет
     document.getElementById('ticketForm').style.display = 'none';
     document.getElementById('ticketOptions').style.display = 'none';
-    
+
     const ticketContainer = document.getElementById('ticketContainer');
     const ticketContent = document.getElementById('ticketContent');
-    
+
     ticketContent.innerHTML = `
         <div style="display: flex; flex-direction: column; height: 100%;">
             <div style="flex: 1;">
@@ -125,7 +124,7 @@ function generateTicket() {
             <button class="close-button" onclick="closeTicket()">ЗАКРЫТЬ</button>
         </div>
     `;
-    
+
     // Устанавливаем QR-код
     if (!qrCache[formattedTicketNumber]) {
         qrCache[formattedTicketNumber] = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${formattedTicketNumber}`;
@@ -133,11 +132,11 @@ function generateTicket() {
     document.getElementById('qrCode').src = qrCache[formattedTicketNumber];
     document.getElementById('qrTicketNumber').innerHTML = `<img src="Снимок6.PNG" style="width: 28px; height: 32px; vertical-align: middle; margin-right: 5px;"> ${formattedTicketNumber}`;
     document.getElementById('qrNumberDisplay').textContent = `№ ${formattedTicketNumber}`;
-    
+
     // Показываем билет
     ticketContainer.style.display = 'block';
     startCountdown();
-    
+
     // Сохраняем билет в историю
     const newTicket = {
         ticketContent: ticketContent.innerHTML,
@@ -145,7 +144,7 @@ function generateTicket() {
         qrTicketNumber: document.getElementById('qrTicketNumber').textContent,
         qrNumberDisplay: document.getElementById('qrNumberDisplay').textContent
     };
-    
+
     lastTickets.unshift(newTicket);
     if (lastTickets.length > 3) lastTickets.pop();
     localStorage.setItem('lastTickets', JSON.stringify(lastTickets));
@@ -153,27 +152,62 @@ function generateTicket() {
 
 // Запускаем генерацию билета при загрузке страницы
 document.addEventListener('DOMContentLoaded', function() {
-    // Получаем параметры URL
-    const params = getUrlParameters();
-    
-    // Проверяем, открыта ли страница из Telegram Web App
-    if (tg.initData && tg.initData.length > 0) {
-        // Если страница открыта через Telegram и есть параметр auto_generate
-        if (params.auto_generate === 'true') {
-            // Генерируем билет на основе данных из URL
-            generateTicket();
-        } else {
-            // Если нет параметра auto_generate, показываем обычные опции
-            showTicketOptions();
-        }
-    } else {
-        // Проверяем, есть ли параметры для автоматической генерации билета
-        if (params.auto_generate === 'true') {
-            // Генерируем билет на основе данных из URL
-            generateTicket();
-        } else {
-            // Иначе показываем обычные опции
-            showTicketOptions();
-        }
-    }
+    generateTicket();
 });
+
+function closeTicket() {
+    const ticketContainer = document.getElementById('ticketContainer');
+    ticketContainer.style.transform = 'translateX(0)';
+    ticketContainer.style.display = 'none';
+    isQRView = false;
+
+    if (countdownInterval) {
+        clearInterval(countdownInterval);
+    }
+
+    // Проверяем, есть ли параметры билета в URL
+    const params = getUrlParameters();
+    const hasTicketParams = params.auto_generate === 'true' || params.direct_ticket === 'true';
+
+    // Если билет был открыт из истории или мы находимся в прямом режиме просмотра билета, закрываем приложение
+    if (viewingHistoryTicket || hasTicketParams) {
+        tg.close();
+    } else {
+        // Иначе возвращаемся к меню опций
+        document.getElementById('ticketOptions').style.display = 'block';
+    }
+}
+
+// Assume functions showTicketOptions, decodeUrlParameter, startCountdown, showTicketView, showQRView are defined elsewhere.  This is necessary for the code to function.
+//  These functions are not provided in the original or modified code snippets and must exist for proper execution.
+
+let qrCache = {};
+let lastTickets = JSON.parse(localStorage.getItem('lastTickets')) || [];
+let viewingHistoryTicket = false;
+let isQRView = false;
+let countdownInterval;
+
+function startCountdown() {
+    let timeLeft = 15;
+    countdownInterval = setInterval(() => {
+        document.getElementById('countdown').textContent = `Действует: ${timeLeft} сек.`;
+        timeLeft--;
+        if (timeLeft < 0) {
+            clearInterval(countdownInterval);
+            closeTicket();
+        }
+    }, 1000);
+}
+
+function showTicketView() {
+    // Implementation for showing ticket view
+}
+
+function showQRView() {
+    // Implementation for showing QR view
+}
+
+function decodeUrlParameter(param) {
+    // Implementation for decoding URL parameters
+    return param; // Placeholder
+}
