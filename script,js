@@ -366,8 +366,7 @@ function initApp() {
     now.setMinutes(now.getMinutes() - 30);
 
     const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
-    // Форматируем день с ведущим нулем если меньше 10
-    const day = now.getDate() < 10 ? `0${now.getDate()}` : now.getDate();
+    const day = now.getDate();
     const month = months[now.getMonth()];
     const year = now.getFullYear();
     const currentDate = `${day} ${month} ${year}`;
@@ -440,9 +439,7 @@ function initApp() {
     const dateRegex = /(\d+)\s+(\w+)\s+(\d+)/;
     const match = ticketData.date.match(dateRegex);
     if (match) {
-        // Форматируем день с ведущим нулем если меньше 10
-        let dayNum = parseInt(match[1], 10);
-        const day = dayNum < 10 ? `0${dayNum}` : `${dayNum}`;
+        const day = match[1];
         let monthName = match[2].toLowerCase();
         const year = match[3];
 
