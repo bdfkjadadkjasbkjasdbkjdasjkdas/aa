@@ -214,7 +214,7 @@ function showTicketView() {
     qrTicketNumber.style.position = 'relative';
 
     // Обновляем номер билета с соответствующей иконкой
-    qrTicketNumber.innerHTML = `<img src="Снимок7.PNG" style="width: 25px; height: 25px; vertical-align: middle; margin-right: 5px;"> <span id="qrTicketNum">${document.getElementById('qrTicketNum').textContent}</span>`;
+    qrTicketNumber.innerHTML = `<img src="Снимок7.PNG" style="width: 28px; height: 32px; vertical-align: middle; margin-right: 5px;"> <span id="qrTicketNum">${document.getElementById('qrTicketNum').textContent}</span>`;
     qrTicketNumber.style.paddingBottom = '0';
 
     // Remove existing underline if present
@@ -247,7 +247,7 @@ function showTicketView() {
         controlUnderline.remove();
     }
 
-    controlTab.innerHTML = `<img src="https://i.imgur.com/9nKXwQk.png" style="width: 25px; height: 30px; vertical-align: middle; margin-right: 5px;"> Контроль`;
+    controlTab.innerHTML = `<img src="Снимок10.PNG" style="width: 25px; height: 30px; vertical-align: middle; margin-right: 5px;"> Контроль`;
     isQRView = false;
 }
 
@@ -295,7 +295,7 @@ function showQRView() {
         controlTab.appendChild(controlUnderline);
     }, 10);
 
-    qrTicketNumber.innerHTML = `<img src="https://i.imgur.com/TLZcW19.png" style="width: 25px; height: 25px; vertical-align: middle; margin-right: 5px;"> <span id="qrTicketNum">${document.getElementById('qrTicketNum').textContent}</span>`;
+    qrTicketNumber.innerHTML = `<img src="Снимок6.PNG" style="width: 28px; height: 32px; vertical-align: middle; margin-right: 5px;"> <span id="qrTicketNum">${document.getElementById('qrTicketNum').textContent}</span>`;
 
     isQRView = true;
 }
@@ -484,7 +484,7 @@ function initApp() {
     const ticketCount = parseInt(ticketData.ticket_count);
     const totalPrice = pricePerTicket * ticketCount;
 
-    document.getElementById('price').innerHTML = `${ticketCount} шт., Полный, <span style="margin-left: 5px;">${totalPrice}.00</span> <img src="https://i.imgur.com/DRNquWr.png" style="width: 15px; height: 20px; vertical-align: middle; position: relative; top: -1px;">`;
+    document.getElementById('price').innerHTML = `${ticketCount} шт., Полный, <span style="margin-left: 5px;">${totalPrice}.00</span> <img src="снимок32.png" style="width: 15px; height: 20px; vertical-align: middle; position: relative; top: -1px;">`;
     document.getElementById('purchase-date').textContent = ticketData.date;
     document.getElementById('purchase-time').textContent = ticketData.time;
 
