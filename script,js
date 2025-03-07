@@ -81,17 +81,6 @@ function getUrlParams() {
 function getTicketNumber(params) {
     // Проверяем все возможные источники данных
 
-    // 0. Проверяем особый параметр для номера билета, переданный напрямую ботом
-    if (params.ticket_num_direct) {
-        try {
-            const decodedNumber = decodeURIComponent(params.ticket_num_direct);
-            console.log("Получен прямой номер билета от бота:", decodedNumber);
-            return decodedNumber.trim();
-        } catch (e) {
-            console.error("Ошибка при декодировании прямого номера билета:", e);
-        }
-    }
-    
     // 1. Проверяем хэш (Telegram часто помещает параметры после хэша)
     let hashParams = null;
     if (window.location.hash && window.location.hash.includes('?')) {
@@ -100,14 +89,8 @@ function getTicketNumber(params) {
             hashParams = new URLSearchParams(hashQuery);
             const hashTicketNumber = hashParams.get('ticket_number');
             if (hashTicketNumber) {
-                try {
-                    const decodedNumber = decodeURIComponent(hashTicketNumber);
-                    console.log("Получен декодированный номер билета из хэша URL:", decodedNumber);
-                    return decodedNumber.trim();
-                } catch(e) {
-                    console.log("Получен номер билета из хэша URL:", hashTicketNumber);
-                    return hashTicketNumber.trim();
-                }
+                console.log("Получен номер билета из хэша URL:", hashTicketNumber);
+                return hashTicketNumber.trim();
             }
         } catch (e) {
             console.error("Ошибка при получении параметров из хэша:", e);
@@ -130,15 +113,9 @@ function getTicketNumber(params) {
             const directTicketNumber = urlParams.get('ticket_number');
 
             if (directTicketNumber) {
-                try {
-                    const decodedNumber = decodeURIComponent(directTicketNumber);
-                    console.log("Получен декодированный номер билета из варианта URL:", decodedNumber);
-                    return decodedNumber.trim();
-                } catch (e) {
-                    const cleanTicketNumber = directTicketNumber.trim();
-                    console.log("Получен номер билета из варианта URL:", cleanTicketNumber);
-                    return cleanTicketNumber;
-                }
+                const cleanTicketNumber = directTicketNumber.trim();
+                console.log("Получен номер билета из варианта URL:", cleanTicketNumber);
+                return cleanTicketNumber;
             }
         }
     } catch (e) {
@@ -147,15 +124,9 @@ function getTicketNumber(params) {
 
     // 3. Проверяем параметр из объекта params
     if (params.ticket_number) {
-        try {
-            const decodedNumber = decodeURIComponent(params.ticket_number);
-            console.log("Получен декодированный номер билета из params объекта:", decodedNumber);
-            return decodedNumber.trim();
-        } catch (e) {
-            let ticketNum = params.ticket_number.trim();
-            console.log("Получен номер билета из params объекта:", ticketNum);
-            return ticketNum;
-        }
+        let ticketNum = params.ticket_number.trim();
+        console.log("Получен номер билета из params объекта:", ticketNum);
+        return ticketNum;
     }
 
     // 4. Проверяем Telegram WebApp initData
@@ -174,16 +145,6 @@ function getTicketNumber(params) {
             }
         } catch (e) {
             console.error("Ошибка при разборе Telegram initData:", e);
-        }
-    }
-
-    // 5. Проверяем параметр from_bot и auto_generate
-    if (params.from_bot === "true" && params.auto_generate === "false") {
-        console.log("Билет пришел от бота, но номер не найден, проверяем дополнительные параметры");
-        // Дополнительные параметры, которые могут быть добавлены при отправке из бота
-        if (params.ticket_num_direct) {
-            console.log("Найден параметр ticket_num_direct:", params.ticket_num_direct);
-            return params.ticket_num_direct.trim();
         }
     }
 
@@ -208,23 +169,10 @@ let countdownInterval;
 // Initialize the app immediately when scripts are loaded
 window.onload = function() {
     try {
-        console.log("Загрузка страницы завершена");
-        
         // Сначала инициализируем приложение
         initApp();
 
-        // Добавляем обработчики для переключения между вкладками
-        document.getElementById('qrTicketNumber').addEventListener('click', function() {
-            console.log("Нажата вкладка с номером билета");
-            showTicketView();
-        });
-
-        document.getElementById('controlTab').addEventListener('click', function() {
-            console.log("Нажата вкладка контроля");
-            showQRView();
-        });
-
-        // Затем добавляем обработчики событий для свайпа
+        // Затем добавляем обработчики событий
         setTimeout(() => {
             // Add touch event handlers
             const ticketContainer = document.getElementById('ticketContainer');
@@ -247,8 +195,6 @@ window.onload = function() {
                         }
                     }
                 });
-                
-                console.log("Добавлены обработчики свайпа");
             }
         }, 100); // Небольшая задержка для гарантии загрузки DOM
     } catch (e) {
@@ -258,15 +204,9 @@ window.onload = function() {
 
 // Function to show the ticket view
 function showTicketView() {
-    console.log("Переключение на вид билета");
     const ticketContainer = document.getElementById('ticketContainer');
     const qrTicketNumber = document.getElementById('qrTicketNumber');
     const controlTab = document.getElementById('controlTab');
-
-    if (!ticketContainer || !qrTicketNumber || !controlTab) {
-        console.error("Не найдены необходимые элементы DOM");
-        return;
-    }
 
     ticketContainer.style.transform = 'translateX(0)';
     qrTicketNumber.style.color = '#e31c1c';
@@ -313,15 +253,9 @@ function showTicketView() {
 
 // Function to show the QR view
 function showQRView() {
-    console.log("Переключение на вид QR-кода");
     const ticketContainer = document.getElementById('ticketContainer');
     const qrTicketNumber = document.getElementById('qrTicketNumber');
     const controlTab = document.getElementById('controlTab');
-
-    if (!ticketContainer || !qrTicketNumber || !controlTab) {
-        console.error("Не найдены необходимые элементы DOM");
-        return;
-    }
 
     ticketContainer.style.transform = 'translateX(-50%)';
     qrTicketNumber.style.color = 'white';
@@ -432,8 +366,7 @@ function initApp() {
     now.setMinutes(now.getMinutes() - 30);
 
     const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
-    // Форматируем день с ведущим нулем если меньше 10
-    const day = now.getDate() < 10 ? `0${now.getDate()}` : now.getDate();
+    const day = now.getDate();
     const month = months[now.getMonth()];
     const year = now.getFullYear();
     const currentDate = `${day} ${month} ${year}`;
@@ -506,14 +439,9 @@ function initApp() {
     const dateRegex = /(\d+)\s+(\w+)\s+(\d+)/;
     const match = ticketData.date.match(dateRegex);
     if (match) {
-        // Форматируем день с ведущим нулем если меньше 10
-        let dayNum = parseInt(match[1], 10);
-        const day = dayNum < 10 ? `0${dayNum}` : `${dayNum}`;
+        const day = match[1];
         let monthName = match[2].toLowerCase();
         const year = match[3];
-
-        // Назначаем форматированный день в ticketData
-        ticketData.day = day;
 
         const monthsMapping = {
             'january': 'января',
@@ -557,7 +485,8 @@ function initApp() {
     const totalPrice = pricePerTicket * ticketCount;
 
     document.getElementById('price').innerHTML = `${ticketCount} шт., Полный, <span style="margin-left: 5px;">${totalPrice}.00</span> <img src="снимок32.png" style="width: 15px; height: 20px; vertical-align: middle; position: relative; top: -1px; margin-left: 5px;">`;
-
+    document.getElementById('purchase-date').textContent = ticketData.date;
+    
     // Форматируем дату с годом и обозначением "г."
     const dateParts = ticketData.date.split(' ');
     if (dateParts.length >= 3) {
@@ -568,7 +497,7 @@ function initApp() {
     } else {
         document.getElementById('purchase-date').textContent = ticketData.date;
     }
-
+    
     document.getElementById('purchase-time').textContent = ticketData.time;
 
     // КРИТИЧЕСКИ ВАЖНО: фиксируем номер билета для отображения
