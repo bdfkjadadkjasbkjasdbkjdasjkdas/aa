@@ -23,10 +23,33 @@ try {
 // Function to get URL parameters
 function getUrlParams() {
     const params = {};
-    const queryString = window.location.search;
+    let queryString = window.location.search;
+    
+    // Telegram иногда помещает параметры после хэша, проверяем это
+    if (window.location.hash && window.location.hash.includes('?')) {
+        queryString = window.location.hash.substring(window.location.hash.indexOf('?'));
+    }
     
     if (!queryString || queryString === "?") {
         console.log("URL не содержит параметров");
+        // Еще один способ получить параметры через Telegram WebApp
+        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) {
+            console.log("Пробуем получить данные из Telegram.WebApp.initData");
+            try {
+                const initData = new URLSearchParams(window.Telegram.WebApp.initData);
+                if (initData.has('start_param')) {
+                    const startParam = initData.get('start_param');
+                    if (startParam.includes('ticket_number=')) {
+                        const ticketNumber = startParam.split('ticket_number=')[1].split('&')[0];
+                        params.ticket_number = ticketNumber;
+                        console.log("Получен номер билета из Telegram.WebApp.initData:", ticketNumber);
+                    }
+                }
+            } catch (e) {
+                console.error("Ошибка при разборе initData:", e);
+            }
+        }
+        
         return params;
     }
     
@@ -39,10 +62,12 @@ function getUrlParams() {
             console.log(`- ${key}: ${value}`);
             // Дополнительно декодируем значение, так как оно может быть закодировано дважды
             try {
-                params[key] = decodeURIComponent(decodeURIComponent(value));
+                const decodedValue = decodeURIComponent(value);
+                params[key] = decodedValue;
+                console.log(`Декодированное значение для ${key}:`, decodedValue);
             } catch (e) {
-                // Если произошла ошибка при двойном декодировании, используем одинарное
-                params[key] = decodeURIComponent(value);
+                params[key] = value;
+                console.log(`Используем исходное значение для ${key}:`, value);
             }
         }
     } catch (e) {
@@ -54,23 +79,73 @@ function getUrlParams() {
 
 // Function to get ticket number from URL params or use default
 function getTicketNumber(params) {
-    // Сначала проверяем прямой метод получения через URLSearchParams
-    const urlSearchParams = new URLSearchParams(window.location.search);
-    const directTicketNumber = urlSearchParams.get('ticket_number');
+    // Проверяем все возможные источники данных
     
-    if (directTicketNumber) {
-        // Удаляем лишние пробелы, если они есть
-        const cleanTicketNumber = directTicketNumber.trim();
-        console.log("Получен номер билета напрямую из URL:", cleanTicketNumber);
-        return cleanTicketNumber;
+    // 1. Проверяем хэш (Telegram часто помещает параметры после хэша)
+    let hashParams = null;
+    if (window.location.hash && window.location.hash.includes('?')) {
+        try {
+            const hashQuery = window.location.hash.substring(window.location.hash.indexOf('?'));
+            hashParams = new URLSearchParams(hashQuery);
+            const hashTicketNumber = hashParams.get('ticket_number');
+            if (hashTicketNumber) {
+                console.log("Получен номер билета из хэша URL:", hashTicketNumber);
+                return hashTicketNumber.trim();
+            }
+        } catch (e) {
+            console.error("Ошибка при получении параметров из хэша:", e);
+        }
     }
     
-    // Проверяем параметр из объекта params
+    // 2. Проверяем параметры URL напрямую
+    try {
+        // Проверяем все возможные варианты URL
+        const urlVariants = [
+            window.location.search, // Стандартный URL query
+            window.location.hash.replace('#', '?'), // Хэш как query
+            `?${window.location.hash.substring(1)}` // Хэш без # как query
+        ];
+        
+        for (const urlVariant of urlVariants) {
+            if (!urlVariant || urlVariant === '?' || urlVariant === '#') continue;
+            
+            const urlParams = new URLSearchParams(urlVariant);
+            const directTicketNumber = urlParams.get('ticket_number');
+            
+            if (directTicketNumber) {
+                const cleanTicketNumber = directTicketNumber.trim();
+                console.log("Получен номер билета из варианта URL:", cleanTicketNumber);
+                return cleanTicketNumber;
+            }
+        }
+    } catch (e) {
+        console.error("Ошибка при проверке вариантов URL:", e);
+    }
+    
+    // 3. Проверяем параметр из объекта params
     if (params.ticket_number) {
-        // Удаляем лишние пробелы
         let ticketNum = params.ticket_number.trim();
         console.log("Получен номер билета из params объекта:", ticketNum);
         return ticketNum;
+    }
+    
+    // 4. Проверяем Telegram WebApp initData
+    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) {
+        try {
+            const initDataParams = new URLSearchParams(window.Telegram.WebApp.initData);
+            // Проверяем start_param или другие параметры
+            if (initDataParams.has('start_param')) {
+                const startParamStr = initDataParams.get('start_param');
+                const startParam = new URLSearchParams(startParamStr);
+                if (startParam.has('ticket_number')) {
+                    const ticketNumber = startParam.get('ticket_number').trim();
+                    console.log("Получен номер билета из Telegram initData:", ticketNumber);
+                    return ticketNumber;
+                }
+            }
+        } catch (e) {
+            console.error("Ошибка при разборе Telegram initData:", e);
+        }
     }
     
     // Если номер не передан, используем дефолтный
@@ -312,6 +387,25 @@ function initApp() {
     const directTicketNumber = searchParams.get('ticket_number');
     console.log("Прямое чтение номера билета из URL:", directTicketNumber);
 
+    // Получаем номер билета из всех возможных источников и декодируем его
+    let finalTicketNumber = directTicketNumber || ticketNumber;
+    try {
+        if (finalTicketNumber) {
+            // Пробуем декодировать, если номер закодирован
+            finalTicketNumber = decodeURIComponent(finalTicketNumber);
+            console.log("Декодированный номер билета:", finalTicketNumber);
+        }
+    } catch (e) {
+        console.error("Ошибка при декодировании номера билета:", e);
+    }
+    
+    // Выводим дебаг информацию о номере билета
+    console.log("========= ИНФОРМАЦИЯ О НОМЕРЕ БИЛЕТА =========");
+    console.log("directTicketNumber:", directTicketNumber);
+    console.log("ticketNumber из функции getTicketNumber:", ticketNumber);
+    console.log("Итоговый номер билета:", finalTicketNumber);
+    console.log("=============================================");
+    
     // Get ticket data from URL parameters with priority to direct URL params
     const ticketData = {
         carrier: searchParams.get('carrier') || urlParams.carrier || 'ИП Патрин Н. Н.',
@@ -319,12 +413,16 @@ function initApp() {
         route_name: searchParams.get('route_name') || urlParams.route_name || 'Парк "Прищепка" - Спортзал',
         bus_number: searchParams.get('bus_number') || urlParams.bus_number || 'х312мв124',
         ticket_count: searchParams.get('ticket_count') || urlParams.ticket_count || 1,
-        // Высший приоритет у прямого параметра из URL
-        ticket_number: directTicketNumber || ticketNumber,
+        // Высший приоритет у финального номера билета
+        ticket_number: finalTicketNumber,
         price: searchParams.get('price') || urlParams.price || 44,
         date: searchParams.get('date') || urlParams.date || currentDate,
         time: searchParams.get('time') || urlParams.time || currentTime
     };
+    
+    // Явно выводим все данные билета, особое внимание на номер билета
+    console.log("Полные данные билета:", JSON.stringify(ticketData, null, 2));
+    console.log("НОМЕР БИЛЕТА ДЛЯ ОТОБРАЖЕНИЯ:", ticketData.ticket_number);
     
     console.log("Данные билета после обработки:", ticketData);
     
@@ -390,7 +488,13 @@ function initApp() {
     document.getElementById('purchase-date').textContent = ticketData.date;
     document.getElementById('purchase-time').textContent = ticketData.time;
 
-    // Важно: используем номер билета прямо из URL без модификаций
+    // КРИТИЧЕСКИ ВАЖНО: фиксируем номер билета для отображения
+    // Если номер не найден в URL, используем запасной вариант
+    if (!ticketData.ticket_number || ticketData.ticket_number === "undefined" || ticketData.ticket_number === "null" || ticketData.ticket_number === "") {
+        console.error("ОШИБКА: Номер билета отсутствует или некорректный!");
+        ticketData.ticket_number = "000 000 000";
+    }
+    
     // Максимально четкий вывод для отладки
     console.log("ФИНАЛЬНЫЙ НОМЕР БИЛЕТА ДЛЯ ОТОБРАЖЕНИЯ:", ticketData.ticket_number);
     console.log("Тип данных номера билета:", typeof ticketData.ticket_number);
@@ -398,14 +502,25 @@ function initApp() {
     // Сохраняем финальный номер в глобальной переменной для использования в других частях приложения
     window.finalTicketNumber = ticketData.ticket_number;
     
-    // Гарантируем, что номер билета корректный и не пустой
-    const finalTicketNumber = ticketData.ticket_number || "000 000 000";
-    console.log("Окончательный номер билета для отображения в UI:", finalTicketNumber);
+    // Гарантируем, что номер билета корректный и не пустой - все проверки пройдены
+    console.log("НОМЕР БИЛЕТА ОТОБРАЖАЕМЫЙ В UI:", ticketData.ticket_number);
     
-    // Обновляем номер билета во всех местах страницы
-    document.getElementById('mainTicketNumber').textContent = finalTicketNumber;
-    document.getElementById('qrTicketNum').textContent = finalTicketNumber;
-    document.getElementById('qrNumberDisplay').textContent = `№ ${finalTicketNumber}`;
+    // Принудительно обновляем все элементы DOM с номером билета
+    const ticketElements = [
+        { id: 'mainTicketNumber', prefix: '' },
+        { id: 'qrTicketNum', prefix: '' },
+        { id: 'qrNumberDisplay', prefix: '№ ' }
+    ];
+    
+    ticketElements.forEach(element => {
+        const domElement = document.getElementById(element.id);
+        if (domElement) {
+            domElement.textContent = element.prefix + ticketData.ticket_number;
+            console.log(`Обновлен элемент ${element.id} значением: ${element.prefix + ticketData.ticket_number}`);
+        } else {
+            console.error(`Элемент с ID ${element.id} не найден в DOM!`);
+        }
+    });
 
     // Generate QR code - используем номер билета из URL для QR кода
     const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(ticketData.ticket_number)}`;
