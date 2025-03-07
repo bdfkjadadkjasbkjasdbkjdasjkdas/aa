@@ -485,7 +485,18 @@ function initApp() {
     const totalPrice = pricePerTicket * ticketCount;
 
     document.getElementById('price').innerHTML = `${ticketCount} шт., Полный, <span style="margin-left: 5px;">${totalPrice}.00</span> <img src="снимок32.png" style="width: 15px; height: 20px; vertical-align: middle; position: relative; top: -1px; margin-left: 5px;">`;
-    document.getElementById('purchase-date').textContent = ticketData.date;
+    
+    // Форматируем дату с годом и обозначением "г."
+    const dateParts = ticketData.date.split(' ');
+    if (dateParts.length >= 3) {
+        const day = dateParts[0];
+        const month = dateParts[1];
+        const year = dateParts[2];
+        document.getElementById('purchase-date').textContent = `${day} ${month} ${year} г.`;
+    } else {
+        document.getElementById('purchase-date').textContent = ticketData.date;
+    }
+    
     document.getElementById('purchase-time').textContent = ticketData.time;
 
     // КРИТИЧЕСКИ ВАЖНО: фиксируем номер билета для отображения
