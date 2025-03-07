@@ -22,12 +22,12 @@ function getTicketNumber(params) {
         let ticketNum = params.ticket_number.trim();
 
         console.log("Получен номер билета из URL (должен использоваться):", ticketNum);
-        
+
         // Уже отформатированный номер из бота оставляем как есть
         if (ticketNum.indexOf(' ') !== -1) {
             return ticketNum;
         }
-        
+
         // Если пробелов нет, форматируем номер
         // Для номера из 9 цифр (стандартный формат от бота 900-999 + 100-999 + 100-999)
         if (ticketNum.length === 9) {
@@ -272,7 +272,7 @@ function initApp() {
 
     // ВАЖНО: Используем ТОЛЬКО номер билета из URL, не генерируем новый!
     console.log("Используем номер билета из URL:", ticketData.ticket_number);
-    
+
     // Не делаем никаких изменений в номере билета, используем полученный из бота
     console.log("Отображаемый номер билета (из бота):", ticketData.ticket_number);
 
