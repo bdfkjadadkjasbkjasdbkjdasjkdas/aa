@@ -208,10 +208,23 @@ let countdownInterval;
 // Initialize the app immediately when scripts are loaded
 window.onload = function() {
     try {
+        console.log("Загрузка страницы завершена");
+        
         // Сначала инициализируем приложение
         initApp();
 
-        // Затем добавляем обработчики событий
+        // Добавляем обработчики для переключения между вкладками
+        document.getElementById('qrTicketNumber').addEventListener('click', function() {
+            console.log("Нажата вкладка с номером билета");
+            showTicketView();
+        });
+
+        document.getElementById('controlTab').addEventListener('click', function() {
+            console.log("Нажата вкладка контроля");
+            showQRView();
+        });
+
+        // Затем добавляем обработчики событий для свайпа
         setTimeout(() => {
             // Add touch event handlers
             const ticketContainer = document.getElementById('ticketContainer');
@@ -234,6 +247,8 @@ window.onload = function() {
                         }
                     }
                 });
+                
+                console.log("Добавлены обработчики свайпа");
             }
         }, 100); // Небольшая задержка для гарантии загрузки DOM
     } catch (e) {
@@ -243,9 +258,15 @@ window.onload = function() {
 
 // Function to show the ticket view
 function showTicketView() {
+    console.log("Переключение на вид билета");
     const ticketContainer = document.getElementById('ticketContainer');
     const qrTicketNumber = document.getElementById('qrTicketNumber');
     const controlTab = document.getElementById('controlTab');
+
+    if (!ticketContainer || !qrTicketNumber || !controlTab) {
+        console.error("Не найдены необходимые элементы DOM");
+        return;
+    }
 
     ticketContainer.style.transform = 'translateX(0)';
     qrTicketNumber.style.color = '#e31c1c';
@@ -292,9 +313,15 @@ function showTicketView() {
 
 // Function to show the QR view
 function showQRView() {
+    console.log("Переключение на вид QR-кода");
     const ticketContainer = document.getElementById('ticketContainer');
     const qrTicketNumber = document.getElementById('qrTicketNumber');
     const controlTab = document.getElementById('controlTab');
+
+    if (!ticketContainer || !qrTicketNumber || !controlTab) {
+        console.error("Не найдены необходимые элементы DOM");
+        return;
+    }
 
     ticketContainer.style.transform = 'translateX(-50%)';
     qrTicketNumber.style.color = 'white';
@@ -484,6 +511,9 @@ function initApp() {
         const day = dayNum < 10 ? `0${dayNum}` : `${dayNum}`;
         let monthName = match[2].toLowerCase();
         const year = match[3];
+
+        // Назначаем форматированный день в ticketData
+        ticketData.day = day;
 
         const monthsMapping = {
             'january': 'января',
