@@ -370,8 +370,8 @@ function initApp() {
     purchaseTime.setHours(purchaseTime.getHours() - 3);
 
     const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
-    // Форматируем день с ведущим нулем только если меньше 10
-    const day = now.getDate() < 10 ? `0${now.getDate()}` : now.getDate();
+    // Всегда форматируем день с ведущим нулем
+    const day = now.getDate().toString().padStart(2, '0');
     const month = months[now.getMonth()];
     const year = now.getFullYear();
     const currentDate = `${day} ${month} ${year}`;
@@ -491,8 +491,8 @@ function initApp() {
         };
 
         let dayNum = parseInt(day, 10);
-        // Форматируем день с ведущим нулем только если меньше 10
-        const formattedDay = dayNum < 10 ? `0${dayNum}` : `${dayNum}`;
+        // Всегда форматируем день с ведущим нулем
+        const formattedDay = dayNum.toString().padStart(2, '0');
         const monthRus = monthsMapping[monthName] || monthName;
         ticketData.date = `${formattedDay} ${monthRus} ${year}`;
     }
