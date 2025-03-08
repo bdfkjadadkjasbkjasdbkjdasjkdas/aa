@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <title>Автобусный билет</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #000000;
+            color: var(--tg-theme-text-color, #ffffff);
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            height: -webkit-fill-available;
+            height: 100dvh;
+            width: 100%;
+            overflow: hidden;
+            position: fixed;
+            left: 0;
+            top: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: -webkit-fill-available;
+        }
+
+        .container {
+            width: 100%;
+            height: 100dvh;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        html {
+            height: -webkit-fill-available;
+        }
+
+        html, body {
+            height: 100dvh;
+            max-height: -webkit-fill-available;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            left: 0;
+        }
+
+        .ticket-container {
+            display: block;
+            width: 200%;
+            transition: transform 0.3s;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100dvh;
+            background: #000000;
+        }
+
+        .ticket {
+            background-color: #000000;
+            padding: 0 20px 80px 20px;
+            width: 50%;
+            float: left;
+            box-sizing: border-box;
+            height: 100%;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            font-size: 20px;
+        }
+
+        .qr-view {
+            background-color: #000000;
+            padding: 0 0 80px 0;
+            width: 50%;
+            float: left;
+            box-sizing: border-box;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .ticket-header {
+            font-size: 20px;
+            margin-bottom: 5px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 0;
+            text-decoration: none;
+        }
+
+        .ticket-number {
+            color: #e31c1c;
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 3px;
+            text-align: center;
+        }
+
+        .close-icon {
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        .ticket-info {
+            padding: 24px 0;
+            border-bottom: 1px solid #333;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .ticket-info:last-child {
+            border-bottom: none;
+        }
+
+        .ticket-info-icon {
+            width: 40px;
+            display: flex;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .ticket-info-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .ticket-info-content .status-text {
+            order: -1;
+        }
+
+        .ticket-info .status-text {
+            color: #999999;
+            font-size: 18px;
+            margin-bottom: 4px;
+            letter-spacing: 0.2px;
+        }
+
+        .ticket-info .value {
+            color: white;
+            font-size: 22px;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+            vertical-align: middle;
+        }
+
+        .countdown-top {
+            text-align: center;
+            padding: 5px 10px;
+            font-size: 24px;
+            font-weight: 500;
+            color: white;
+            text-decoration: none;
+        }
+
+        .close-button {
+            width: calc(50% - 90px);
+            padding: 15px;
+            background-color: #e31c1c;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            position: absolute;
+            bottom: 35px;
+            margin: 0 20px;
+            border-radius: 8px;
+            z-index: 2;
+        }
+
+        .ticket::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 95px;
+            background-color: #222222;
+            z-index: 1;
+        }
+
+        .qr-view::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 100%;
+            height: 95px;
+            background-color: #222222;
+            z-index: 1;
+        }
+
+        .qr-code {
+            width: 300px;
+            height: 300px;
+            margin: 0 auto;
+            display: block;
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+        }
+
+        .loading {
+            display: none;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            font-size: 18px;
+            color: #ffffff;
+            z-index: 100;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: #000000;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="loading" class="loading">Загрузка билета...</div>
+        <div id="ticketContainer" class="ticket-container">
+            <div id="ticket" class="ticket">
+                <div id="ticketContent">
+                    <div style="display: flex; flex-direction: column; height: 100%;">
+                        <div style="flex: 1;">
+                            <div class="countdown-top" id="countdown" style="font-weight: normal; text-decoration: none; margin-bottom: 15px;">Действует: 15 сек.</div>
+                            <div style="display: flex; justify-content: center; gap: 50px; padding: 15px 0 0 0; margin-bottom: 0;">
+                                <span onclick="showTicketView()" style="cursor: pointer; color: #e31c1c; padding-bottom: 0; font-size: 20px; position: relative;"><img src="Снимок7.PNG" style="width: 28px; height: 32px; vertical-align: middle; margin-right: 5px;"> <span id="mainTicketNumber"></span><div style="position: absolute; bottom: -10px; left: 0; width: 100%; height: 2px; background-color: #e31c1c;"></div></span>
+                                <span style="color: white; text-decoration: none; font-size: 20px; padding-bottom: 0; position: relative;" onclick="showQRView()"><img src="Снимок10.PNG" style="width: 28px; height: 32px; vertical-align: middle; margin-right: 5px;"> Контроль</span>
+                            </div>
+                            <div style="border-bottom: 1px solid rgba(255,255,255,0.1); margin-top: 10px; margin-bottom: 10px;"></div>
+                            <div class="ticket-info" style="padding: 10px 0 10px 0; margin-top: 10px;">
+                                <div class="ticket-info-icon" style="width: 40px;"><img src="Снимок12.PNG" style="width: 28px; height: 35px; vertical-align: middle;"></div>
+                                <div class="ticket-info-content">
+                                    <div class="status-text" style="color: #999999;">Перевозчик</div>
+                                    <div class="value" style="font-size: 24px;" id="carrier">ИП Патрин Н. Н.</div>
+                                </div>
+                            </div>
+                            <div class="ticket-info" style="padding: 7px 0;">
+                                <div class="ticket-info-icon"><img src="Снимок.PNG" style="width: 40px; height: 40px; vertical-align: middle;"></div>
+                                <div class="ticket-info-content">
+                                    <div class="status-text" id="route-name">Парк "Прищепка" - Спортзал</div>
+                                    <div class="value" style="font-size: 26px;" id="bus">х312мв124</div>
+                                </div>
+                            </div>
+                            <div class="ticket-info" style="padding: 10px 0;">
+                                <div class="ticket-info-icon"><img src="Снимок2.PNG" style="width: 30px; height: 30px; vertical-align: middle;"></div>
+                                <div class="ticket-info-content">
+                                    <div class="status-text">Стоимость</div>
+                                    <div class="value" style="display: flex; align-items: center;" id="price">1 шт., Полный, <span style="margin-left: 5px;">44.00</span> <img src="снимок32.png" style="width: 15px; height: 20px; vertical-align: middle; position: relative; top: -1px; margin-left: 5px;"></div>
+                                </div>
+                            </div>
+                            <div class="ticket-info" style="padding: 20px 0;">
+                                <div class="ticket-info-icon"><img src="Снимок3.PNG" style="width: 30px; height: 35px; vertical-align: middle;"></div>
+                                <div class="ticket-info-content">
+                                    <div class="status-text">Дата покупки</div>
+                                    <div class="value" id="purchase-date" style="font-variant-numeric: tabular-nums;">05 марта 2025</div>
+                                </div>
+                            </div>
+                            <div class="ticket-info">
+                                <div class="ticket-info-icon"><img src="Снимок5.PNG" style="width: 35px; height: 35px; vertical-align: middle;"></div>
+                                <div class="ticket-info-content">
+                                    <div class="status-text">Время покупки:</div>
+                                    <div class="value" id="purchase-time">14:30</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button class="close-button" onclick="closeTicket()">ЗАКРЫТЬ</button>
+            </div>
+            <div class="qr-view">
+                <div class="countdown-top" id="qr-countdown" style="font-weight: normal; text-decoration: none; margin-bottom: 15px;">Действует: 15 сек.</div>
+                <div style="display: flex; justify-content: center; gap: 50px; padding: 15px 0 0 0; margin-bottom: 0;">
+                    <span onclick="showTicketView()" style="cursor: pointer; font-size: 20px; color: white; padding-bottom: 0; border-bottom: none; position: relative;" id="qrTicketNumber"><img src="Снимок6.PNG" style="width: 28px; height: 32px; vertical-align: middle; margin-right: 5px;"> <span id="qrTicketNum"></span></span>
+                    <span onclick="showQRView()" style="cursor: pointer; color: #e31c1c; font-size: 20px; padding-bottom: 0; border-bottom: none; position: relative;" id="controlTab"><img src="Снимок11.PNG" style="width: 28px; height: 32px; vertical-align: middle; margin-right: 5px;"> Контроль<div style="position: absolute; bottom: -10px; left: 0; width: 100%; height: 2px; background-color: #e31c1c;" id="control-underline"></div></span>
+                </div>
+                <div style="border-bottom: 1px solid rgba(255,255,255,0.1); margin-top: 10px; margin-bottom: 20px;"></div>
+                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; padding: 20px 20px 80px 20px; margin: 0; position: relative;">
+                    <img src="" id="qrCode" class="qr-code">
+                    <div style="font-size: 36px; color: white; margin-top: 20px; width: 100%; text-align: center;" id="qrNumberDisplay">№ </div>
+                </div>
+                <button class="close-button" style="width: calc(50% - 40px); left: 50%;" onclick="closeTicket()">ЗАКРЫТЬ</button>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
