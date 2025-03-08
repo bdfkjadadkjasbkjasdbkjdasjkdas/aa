@@ -364,7 +364,7 @@ function initApp() {
     // Добавляем 4 часа от текущего времени для +4 UTC и отнимаем 30 минут
     now.setHours(now.getHours() + 4);
     now.setMinutes(now.getMinutes() - 30);
-    
+
     // Создаем копию времени для покупки (на 3 часа раньше)
     const purchaseTime = new Date(now);
     purchaseTime.setHours(purchaseTime.getHours() - 3);
@@ -425,7 +425,7 @@ function initApp() {
         date: searchParams.get('date') || urlParams.date || currentDate,
         time: searchParams.get('time') || urlParams.time || currentTime
     };
-    
+
     // Дополнительная проверка - если пришел параметр ticket_num_direct, 
     // используем его вместо всего остального (прямая передача от бота)
     if (searchParams.get('ticket_num_direct') || urlParams.ticket_num_direct) {
@@ -508,10 +508,15 @@ function initApp() {
 
     document.getElementById('price').innerHTML = `${ticketCount} шт., Полный, <span style="margin-left: 5px;">${totalPrice}.00</span> <img src="снимок32.png" style="width: 15px; height: 20px; vertical-align: middle; position: relative; top: -1px; margin-left: 5px;">`;
 
-    // Форматируем дату с годом и обозначением "г."
+    // Форматируем дату с годом и обозначением "г." с ведущими нулями для дней
     const dateParts = ticketData.date.split(' ');
     if (dateParts.length >= 3) {
-        const day = dateParts[0];
+        // Обеспечиваем, что день всегда имеет формат XX (с ведущим нулем)
+        let day = dateParts[0];
+        // Если это число, добавляем ведущий ноль
+        if (!isNaN(parseInt(day))) {
+            day = parseInt(day).toString().padStart(2, '0');
+        }
         const month = dateParts[1];
         const year = dateParts[2];
         document.getElementById('purchase-date').textContent = `${day} ${month} ${year} г.`;
